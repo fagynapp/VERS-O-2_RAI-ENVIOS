@@ -18,7 +18,7 @@ import {
   AdminRanking,
   AdminBancoDados,
   AdminConfiguracoes
-} from './pages';
+} from './pages/index.ts';
 
 // --- Components ---
 
