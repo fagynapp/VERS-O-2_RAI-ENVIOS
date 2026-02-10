@@ -18,7 +18,7 @@ import {
   AdminRanking,
   AdminBancoDados,
   AdminConfiguracoes
-} from './pages/index.ts';
+} from './pages';
 
 // --- Components ---
 
@@ -157,24 +157,16 @@ const UserLayout = () => {
   );
 };
 
-export default function App() {
+const App = () => {
   return (
     <HashRouter>
       <Routes>
-        {/* Auth */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        {/* User Routes */}
-        <Route path="/user" element={<UserLayout />}>
-          <Route path="dashboard" element={<UserDashboard />} />
-          <Route path="registro" element={<RegisterRAI />} />
-          <Route path="historico" element={<UserHistory />} />
-          <Route path="calendario" element={<UserCalendar />} />
-        </Route>
-
+        
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="dispensas" element={<AdminDispensas />} />
           <Route path="escala" element={<AdminEscala />} />
@@ -188,9 +180,20 @@ export default function App() {
           <Route path="config" element={<AdminConfiguracoes />} />
         </Route>
 
-        {/* Catch all */}
+        {/* User Routes */}
+        <Route path="/user" element={<UserLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<UserDashboard />} />
+          <Route path="calendario" element={<UserCalendar />} />
+          <Route path="registro" element={<RegisterRAI />} />
+          <Route path="historico" element={<UserHistory />} />
+        </Route>
+
+        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   );
-}
+};
+
+export default App;
