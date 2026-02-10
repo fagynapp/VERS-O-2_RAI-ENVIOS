@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-
-// Mock de Banco de Dados de Policiais - MATRÍCULAS ATUALIZADAS (5 DÍGITOS, SEM PONTOS)
-const mockPoliciais = [
-  { nome: 'SUB TEN MARCELO ROCHA', matricula: '33000' },
-  { nome: '1º SGT OLIVEIRA SANTOS', matricula: '35137' },
-  { nome: 'CB SOARES', matricula: '37000' },
-  { nome: 'SD SILVA', matricula: '37123' },
-  { nome: 'SD ALMEIDA', matricula: '37124' },
-  { nome: 'MAJ ANDERSON', matricula: '20500' },
-  { nome: 'CAP FERNANDES', matricula: '25300' },
-];
+import { usePoliceData, Policial } from '../../contexts/PoliceContext';
 
 interface DispensaRegistro {
   id: string;
@@ -27,6 +17,7 @@ interface BatchEntry {
 }
 
 const AdminEscala = () => {
+  const { policiais, availableTeams } = usePoliceData(); // Consumindo do banco de dados global
   const [selectedTeam, setSelectedTeam] = useState('ALPHA');
   
   // Estado para Navegação do Calendário
@@ -86,7 +77,7 @@ const AdminEscala = () => {
   const [blockReason, setBlockReason] = useState('');
   
   // Estado para sugestões de busca
-  const [suggestions, setSuggestions] = useState<typeof mockPoliciais>([]);
+  const [suggestions, setSuggestions] = useState<Policial[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Lógica de Escala (Baseada em Época para consistência entre meses)
@@ -183,14 +174,18 @@ const AdminEscala = () => {
     if (field === 'matricula') {
       newValue = value.replace(/\D/g, '').slice(0, 5);
       
-      // Atualiza o valor
+      // Atualiza o valor da matrícula
       newEntries[index] = { ...newEntries[index], [field]: newValue };
 
-      // Busca automática
+      // Busca automática no "Banco de Dados" (Context)
       if (newValue.length >= 2) {
-        const policialEncontrado = mockPoliciais.find(p => p.matricula === newValue);
+        const policialEncontrado = policiais.find(p => p.matricula === newValue);
         if (policialEncontrado) {
           newEntries[index].nome = policialEncontrado.nome;
+          // Se a equipe também for preenchida automaticamente, podemos fazer aqui:
+          if (availableTeams.includes(policialEncontrado.equipe)) {
+             newEntries[index].equipe = policialEncontrado.equipe;
+          }
         } else {
           newEntries[index].nome = ''; // Limpa se não encontrar
         }
@@ -269,15 +264,17 @@ const AdminEscala = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Busca Inteligente no Formulário Individual
   const handlePolicialSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData(prev => ({ ...prev, policial: value }));
 
     if (value.length > 0) {
-      const filtered = mockPoliciais.filter(p => 
+      // Busca no Contexto Global
+      const filtered = policiais.filter(p => 
         p.nome.toLowerCase().includes(value.toLowerCase()) || 
         p.matricula.includes(value)
-      );
+      ).slice(0, 5); // Limita a 5 sugestões
       setSuggestions(filtered);
       setShowSuggestions(true);
     } else {
@@ -286,11 +283,12 @@ const AdminEscala = () => {
     }
   };
 
-  const selectPolicial = (policial: typeof mockPoliciais[0]) => {
+  const selectPolicial = (policial: Policial) => {
     setFormData(prev => ({
       ...prev,
       policial: policial.nome,
-      matricula: policial.matricula
+      matricula: policial.matricula,
+      obs: prev.obs ? `${prev.obs} (Equipe: ${policial.equipe})` : `Equipe: ${policial.equipe}`
     }));
     setShowSuggestions(false);
   };
@@ -352,7 +350,7 @@ const AdminEscala = () => {
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Efetivo no Mês', value: '142', icon: 'groups', color: 'bg-blue-50 text-blue-500' },
+          { label: 'Efetivo no Mês', value: policiais.length.toString(), icon: 'groups', color: 'bg-blue-50 text-blue-500' },
           { label: 'Folgas Registradas', value: Object.values(registros).flat().length.toString(), icon: 'calendar_today', color: 'bg-orange-50 text-orange-500' },
           { label: 'Dias Bloqueados', value: Object.keys(blockedDays).length.toString(), icon: 'lock', color: 'bg-red-50 text-red-500' },
           { label: 'Status Escala', value: 'ABERTA', icon: 'lock_open', color: 'bg-slate-50 text-slate-500', isText: true }
@@ -478,10 +476,9 @@ const AdminEscala = () => {
                             onChange={(e) => handleBatchEntryChange(index, 'equipe', e.target.value)}
                             className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 uppercase"
                           >
-                            <option value="ALPHA">ALPHA</option>
-                            <option value="BRAVO">BRAVO</option>
-                            <option value="CHARLIE">CHARLIE</option>
-                            <option value="DELTA">DELTA</option>
+                            {availableTeams.map(team => (
+                                <option key={team} value={team}>{team}</option>
+                            ))}
                           </select>
                         </td>
                         <td className="py-2 px-2">
@@ -517,7 +514,7 @@ const AdminEscala = () => {
 
               <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg text-xs text-blue-800 mt-4 flex gap-2 items-center">
                 <span className="material-icons-round text-lg">info</span>
-                <span>Digite os 5 números da matrícula para identificação automática. Não é necessário preencher todas as linhas.</span>
+                <span>Digite os 5 números da matrícula para identificação automática usando o Banco de Dados.</span>
               </div>
 
               <div className="flex gap-3 justify-end pt-6 border-t border-slate-100 mt-4">

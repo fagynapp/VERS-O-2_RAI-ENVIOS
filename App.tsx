@@ -19,6 +19,7 @@ import {
   AdminBancoDados,
   AdminConfiguracoes
 } from './pages';
+import { PoliceProvider } from './contexts/PoliceContext';
 
 // --- Components ---
 
@@ -159,40 +160,42 @@ const UserLayout = () => {
 
 const App = () => {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="dispensas" element={<AdminDispensas />} />
-          <Route path="escala" element={<AdminEscala />} />
-          <Route path="auditoria" element={<AdminAuditoria />} />
-          <Route path="natureza" element={<AdminNatureza />} />
-          <Route path="liberacoes" element={<AdminLiberacoes />} />
-          <Route path="policiais" element={<AdminGestaoPoliciais />} />
-          <Route path="almanaque" element={<AdminAlmanaque />} />
-          <Route path="ranking" element={<AdminRanking />} />
-          <Route path="db" element={<AdminBancoDados />} />
-          <Route path="config" element={<AdminConfiguracoes />} />
-        </Route>
+    <PoliceProvider>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="dispensas" element={<AdminDispensas />} />
+            <Route path="escala" element={<AdminEscala />} />
+            <Route path="auditoria" element={<AdminAuditoria />} />
+            <Route path="natureza" element={<AdminNatureza />} />
+            <Route path="liberacoes" element={<AdminLiberacoes />} />
+            <Route path="policiais" element={<AdminGestaoPoliciais />} />
+            <Route path="almanaque" element={<AdminAlmanaque />} />
+            <Route path="ranking" element={<AdminRanking />} />
+            <Route path="db" element={<AdminBancoDados />} />
+            <Route path="config" element={<AdminConfiguracoes />} />
+          </Route>
 
-        {/* User Routes */}
-        <Route path="/user" element={<UserLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<UserDashboard />} />
-          <Route path="calendario" element={<UserCalendar />} />
-          <Route path="registro" element={<RegisterRAI />} />
-          <Route path="historico" element={<UserHistory />} />
-        </Route>
+          {/* User Routes */}
+          <Route path="/user" element={<UserLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="calendario" element={<UserCalendar />} />
+            <Route path="registro" element={<RegisterRAI />} />
+            <Route path="historico" element={<UserHistory />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </HashRouter>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </HashRouter>
+    </PoliceProvider>
   );
 };
 

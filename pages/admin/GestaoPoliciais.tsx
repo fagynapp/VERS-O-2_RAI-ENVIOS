@@ -1,121 +1,60 @@
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import { usePoliceData, Policial } from '../../contexts/PoliceContext';
 
-interface Policial {
+// Interface para Afastamentos
+interface Afastamento {
   id: number;
   nome: string;
   matricula: string;
   equipe: string;
-  aniversario: string;
-  telefone: string;
-  email: string;
+  status: 'Férias' | 'Licença' | 'Atestado' | 'Outros';
+  inicio: string;
+  retorno: string;
+  obs: string;
 }
 
-// Lista inicial de Equipes/Setores
-const INITIAL_TEAMS = [
-  'Alpha', 
-  'Bravo', 
-  'Charlie', 
-  'Delta', 
-  'P2', 
-  'P3', 
-  'P4', 
-  'Adjunto', 
-  'TCO', 
-  'Região 44', 
-  'Manutenção', 
-  'Comando', 
-  'SubCmt'
-];
-
-// Mock inicial de dados carregado do PDF
-const initialPoliciais: Policial[] = [
-  { id: 1, nome: 'MAJ KAMINICHE', matricula: '33864', equipe: 'Comando', aniversario: '', telefone: '', email: '' },
-  { id: 2, nome: 'CAP ERNANE', matricula: '36234', equipe: 'SubCmt', aniversario: '', telefone: '', email: '' },
-  { id: 3, nome: '1º TEN J. CARLOS', matricula: '25646', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 4, nome: '1º TEN SANTOS', matricula: '28702', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 5, nome: '1º TEN KLEBER', matricula: '28905', equipe: 'Região 44', aniversario: '', telefone: '', email: '' },
-  { id: 6, nome: '1º TEN SERAFIM', matricula: '30220', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 7, nome: '1º TEN MONTES', matricula: '31123', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 8, nome: '1º TEN SANTIAGO', matricula: '38718', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 9, nome: 'ST ANDRADE', matricula: '28639', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 10, nome: 'ST CLEIBE', matricula: '30611', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 11, nome: 'ST MARCELO', matricula: '31141', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 12, nome: 'ST MARÇAL', matricula: '33073', equipe: 'P4', aniversario: '', telefone: '', email: '' },
-  { id: 13, nome: '1º SGT RAMOS', matricula: '24955', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 14, nome: '1º SGT MACHADO', matricula: '27122', equipe: 'Adjunto', aniversario: '', telefone: '', email: '' },
-  { id: 15, nome: '1º SGT MACEDO', matricula: '27733', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 16, nome: '1º SGT GONÇALVES', matricula: '28027', equipe: 'Adjunto', aniversario: '', telefone: '', email: '' },
-  { id: 17, nome: '1º SGT LÚCIO', matricula: '28493', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 18, nome: '1º SGT MOREIRA', matricula: '28748', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 19, nome: '1º SGT JHONATAN', matricula: '31853', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 20, nome: '1º SGT SUDÁRIO', matricula: '32288', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 21, nome: '2º SGT DE PAULA', matricula: '27183', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 22, nome: '2º SGT LEUCIONE', matricula: '30245', equipe: 'Manutenção', aniversario: '', telefone: '', email: '' },
-  { id: 23, nome: '2º SGT FERNANDO', matricula: '31279', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 24, nome: '2º SGT ÉDER', matricula: '33150', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 25, nome: '2º SGT CARNEIRO', matricula: '33949', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 26, nome: '3º SGT MONTEIRO', matricula: '27310', equipe: 'Adjunto', aniversario: '', telefone: '', email: '' },
-  { id: 27, nome: '3º SGT MORENO', matricula: '31600', equipe: 'Adjunto', aniversario: '', telefone: '', email: '' },
-  { id: 28, nome: '3º SGT WALACE', matricula: '34208', equipe: 'Região 44', aniversario: '', telefone: '', email: '' },
-  { id: 29, nome: '3º SGT DIAS', matricula: '34425', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 30, nome: '3º SGT NETTO', matricula: '34686', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 31, nome: '3º SGT BAYRON', matricula: '35447', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 32, nome: '3º SGT SANDER', matricula: '35534', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 33, nome: '3º SGT DARLAN', matricula: '35619', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 34, nome: '3º SGT ÉZIO', matricula: '35672', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 35, nome: '3º SGT ALENCAR', matricula: '35686', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 36, nome: '3º SGT JAIRO', matricula: '35768', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 37, nome: '3º SGT JUNIO', matricula: '35820', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 38, nome: '3º SGT CÉSAR', matricula: '35928', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 39, nome: 'CB RUFINA', matricula: '36490', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 40, nome: 'CB LIMA', matricula: '36507', equipe: 'P3', aniversario: '', telefone: '', email: '' },
-  { id: 41, nome: 'CB SENA', matricula: '36713', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 42, nome: 'CB AQUINO', matricula: '36720', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 43, nome: 'CB FERREIRA', matricula: '36977', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 44, nome: 'CB EULLER', matricula: '37104', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 45, nome: 'CB SOARES', matricula: '37132', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 46, nome: 'CB WARTELOO', matricula: '37190', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 47, nome: 'CB GILVAN', matricula: '37253', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 48, nome: 'CB DE LIMA', matricula: '37379', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 49, nome: 'CB VARGAS', matricula: '37566', equipe: 'Comando', aniversario: '', telefone: '', email: '' },
-  { id: 50, nome: 'CB EUGÊNIA', matricula: '37800', equipe: 'P3', aniversario: '', telefone: '', email: '' },
-  { id: 51, nome: 'CB MENDES', matricula: '37829', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 52, nome: 'CB PADILHA', matricula: '37932', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 53, nome: 'CB REZENDE', matricula: '37958', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 54, nome: 'CB HENRIQUE', matricula: '38019', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
-  { id: 55, nome: 'CB PASSOS', matricula: '38183', equipe: 'P2', aniversario: '', telefone: '', email: '' },
-  { id: 56, nome: 'CB SAITON', matricula: '38291', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 57, nome: 'SD GERALDO', matricula: '39096', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 58, nome: 'SD GUEDES', matricula: '39203', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 59, nome: 'SD L SILVA', matricula: '39280', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 60, nome: 'SD SUCUPIRA', matricula: '39417', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 61, nome: 'SD SARMENTO', matricula: '39435', equipe: 'Alpha', aniversario: '', telefone: '', email: '' },
-  { id: 62, nome: 'SD VENÂNCIO', matricula: '39505', equipe: 'TCO', aniversario: '', telefone: '', email: '' },
-  { id: 63, nome: 'SD COIMBRA', matricula: '39780', equipe: 'Adjunto', aniversario: '', telefone: '', email: '' },
-  { id: 64, nome: 'SD NETO', matricula: '39948', equipe: 'Bravo', aniversario: '', telefone: '', email: '' },
-  { id: 65, nome: 'SD RENAN', matricula: '39989', equipe: 'Delta', aniversario: '', telefone: '', email: '' },
-  { id: 66, nome: 'SD OLIVEIRA', matricula: '40025', equipe: 'Charlie', aniversario: '', telefone: '', email: '' },
+const mockAfastamentos: Afastamento[] = [
+  { id: 1, nome: '1º SGT S. JUNIOR', matricula: '37123', equipe: 'ALPHA', status: 'Férias', inicio: '2024-01-01', retorno: '2024-01-30', obs: 'Férias regulamentares referente ao período de ...' },
+  { id: 2, nome: '3º SGT A. PEREIRA', matricula: '30100', equipe: 'BRAVO', status: 'Licença', inicio: '2023-10-15', retorno: '2024-04-15', obs: 'Licença prêmio conforme publicação em BI.' },
+  { id: 3, nome: 'CB M. SANTOS', matricula: '33000', equipe: 'CHARLIE', status: 'Atestado', inicio: '2024-01-10', retorno: '2024-01-17', obs: 'Atestado médico - CID M54.5' },
+  { id: 4, nome: 'SD D. FERREIRA', matricula: '37676', equipe: 'DELTA', status: 'Férias', inicio: '2024-01-05', retorno: '2024-02-04', obs: 'Segundo período de férias anuais.' },
 ];
 
 const AdminGestaoPoliciais = () => {
-  const [policiais, setPoliciais] = useState<Policial[]>(initialPoliciais);
-  const [availableTeams, setAvailableTeams] = useState<string[]>(INITIAL_TEAMS);
+  // Use Context Global Data
+  const { policiais, setPoliciais, availableTeams, setAvailableTeams } = usePoliceData();
   
+  const [activeTab, setActiveTab] = useState<'POLICIAIS' | 'AFASTAMENTOS'>('POLICIAIS');
   const [search, setSearch] = useState('');
   const [selectedEquipe, setSelectedEquipe] = useState('TODAS'); // Estado do Filtro
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estados para o Modal de Edição/Criação de Policial
+  // --- ESTADOS PARA AFASTAMENTOS ---
+  const [afastamentos, setAfastamentos] = useState<Afastamento[]>(mockAfastamentos);
+  const [isAbsenceModalOpen, setIsAbsenceModalOpen] = useState(false);
+  const [editingAbsenceId, setEditingAbsenceId] = useState<number | null>(null);
+  const [absenceFormData, setAbsenceFormData] = useState({
+    nome: '',
+    matricula: '',
+    equipe: '',
+    status: 'Férias',
+    inicio: '',
+    retorno: '',
+    obs: ''
+  });
+  // Estados para busca de policial no modal de afastamento
+  const [policialSearchTerm, setPolicialSearchTerm] = useState('');
+  const [policialSuggestions, setPolicialSuggestions] = useState<Policial[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+
+  // --- ESTADOS PARA POLICIAIS ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  
-  // Estados para o Gerenciador de Equipes
   const [isTeamManagerOpen, setIsTeamManagerOpen] = useState(false);
   const [teamToEdit, setTeamToEdit] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
-
-  // Controle de input personalizado de equipe no modal
   const [isCustomTeam, setIsCustomTeam] = useState(false);
   
   const [formData, setFormData] = useState<Omit<Policial, 'id'>>({
@@ -127,18 +66,61 @@ const AdminGestaoPoliciais = () => {
     email: ''
   });
 
-  // Lógica de filtragem atualizada (Case Insensitive e Trim)
+  // Helper para formatar data: AAAA-MM-DD para DD/MM/AAAA
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '-';
+    const parts = dateString.split('-');
+    if (parts.length !== 3) return dateString;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
+  // Helper para formatar matrícula: 37123 -> 37.123
+  const formatMatricula = (value: string) => {
+    if (!value) return '-';
+    const clean = value.replace(/\D/g, '');
+    if (clean.length === 5) {
+      return clean.replace(/^(\d{2})(\d{3})$/, '$1.$2');
+    }
+    return value;
+  };
+
+  // Lógica de filtragem Policiais
   const filteredPoliciais = policiais.filter((policial) => {
-    const matchesSearch = policial.nome.toLowerCase().includes(search.toLowerCase()) ||
-                          policial.matricula.includes(search);
+    // Normaliza a busca e os dados para comparação (remove pontuação para a busca funcionar "sem ponto")
+    const term = search.toLowerCase();
+    const cleanTerm = term.replace(/\D/g, ''); // Apenas números da busca
+    const cleanMatricula = policial.matricula.replace(/\D/g, ''); // Apenas números da matrícula
+
+    const matchesName = policial.nome.toLowerCase().includes(term);
+    // Se a busca tiver números, compara com a matrícula limpa. Se não, ignora matrícula.
+    const matchesMatricula = cleanTerm.length > 0 && cleanMatricula.includes(cleanTerm);
     
-    // Normalização: Converte para minúsculas e remove espaços das pontas
+    // Se a busca for vazia, mostra tudo. Se tiver texto, busca por nome OU matrícula
+    const matchesSearch = term === '' || matchesName || matchesMatricula;
+
     const policialEquipe = policial.equipe ? policial.equipe.toString().trim().toLowerCase() : '';
     const filtroEquipe = selectedEquipe.trim().toLowerCase();
-    
     const matchesEquipe = selectedEquipe === 'TODAS' || policialEquipe === filtroEquipe;
     
     return matchesSearch && matchesEquipe;
+  });
+
+  // Lógica de filtragem Afastamentos
+  const filteredAfastamentos = afastamentos.filter((afastamento) => {
+     // Mesma lógica de normalização para Afastamentos
+     const term = search.toLowerCase();
+     const cleanTerm = term.replace(/\D/g, '');
+     const cleanMatricula = afastamento.matricula.replace(/\D/g, '');
+
+     const matchesName = afastamento.nome.toLowerCase().includes(term);
+     const matchesMatricula = cleanTerm.length > 0 && cleanMatricula.includes(cleanTerm);
+     const matchesSearch = term === '' || matchesName || matchesMatricula;
+     
+     const afastamentoEquipe = afastamento.equipe ? afastamento.equipe.toString().trim().toLowerCase() : '';
+     const filtroEquipe = selectedEquipe.trim().toLowerCase();
+     const matchesEquipe = selectedEquipe === 'TODAS' || afastamentoEquipe === filtroEquipe;
+
+     return matchesSearch && matchesEquipe;
   });
 
   const getEquipeColor = (equipe: string) => {
@@ -156,7 +138,16 @@ const AdminGestaoPoliciais = () => {
     }
   };
 
-  // --- CRUD Handlers ---
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'Férias': return 'bg-blue-100 text-blue-600';
+      case 'Licença': return 'bg-purple-100 text-purple-600';
+      case 'Atestado': return 'bg-red-100 text-red-600';
+      default: return 'bg-slate-100 text-slate-600';
+    }
+  };
+
+  // --- Handlers Policiais ---
 
   const handleDelete = (id: number, nome: string) => {
     if (window.confirm(`Tem certeza que deseja excluir o policial ${nome}?`)) {
@@ -174,60 +165,148 @@ const AdminGestaoPoliciais = () => {
       email: policial.email
     });
     setEditingId(policial.id);
-    // Verificar se a equipe é padrão ou personalizada para ajustar o estado do modal
-    const isStandardTeam = INITIAL_TEAMS.includes(policial.equipe);
+    const isStandardTeam = availableTeams.includes(policial.equipe);
     setIsCustomTeam(!isStandardTeam);
-    
-    setIsModalOpen(true);
-  };
-
-  const handleNew = () => {
-    setFormData({
-      nome: '',
-      matricula: '',
-      equipe: 'Alpha',
-      aniversario: '',
-      telefone: '',
-      email: ''
-    });
-    setEditingId(null);
-    setIsCustomTeam(false);
     setIsModalOpen(true);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.nome || !formData.matricula) {
       alert("Nome e Matrícula são obrigatórios.");
       return;
     }
-
     if (!formData.equipe) {
       alert("Por favor, informe a Equipe/Setor.");
       return;
     }
-
-    // Adiciona a nova equipe à lista de disponíveis se não existir
     if (!availableTeams.some(t => t.toLowerCase() === formData.equipe.toLowerCase())) {
         setAvailableTeams(prev => [...prev, formData.equipe].sort());
     }
-
     if (editingId) {
-      // Editar existente
       setPoliciais(prev => prev.map(p => p.id === editingId ? { ...formData, id: editingId } : p));
     } else {
-      // Criar novo
       const newId = Date.now();
       setPoliciais(prev => [...prev, { ...formData, id: newId }]);
     }
-
     setIsModalOpen(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  // --- Handlers Afastamentos ---
+
+  const handleNew = () => {
+    if (activeTab === 'POLICIAIS') {
+      setFormData({
+        nome: '',
+        matricula: '',
+        equipe: 'Alpha',
+        aniversario: '',
+        telefone: '',
+        email: ''
+      });
+      setEditingId(null);
+      setIsCustomTeam(false);
+      setIsModalOpen(true);
+    } else {
+      // Novo Afastamento
+      setAbsenceFormData({
+        nome: '',
+        matricula: '',
+        equipe: '',
+        status: 'Férias',
+        inicio: '',
+        retorno: '',
+        obs: ''
+      });
+      setEditingAbsenceId(null);
+      setPolicialSearchTerm('');
+      setPolicialSuggestions([]);
+      setIsAbsenceModalOpen(true);
+    }
+  };
+
+  const handleEditAbsence = (afastamento: Afastamento) => {
+    setAbsenceFormData({
+      nome: afastamento.nome,
+      matricula: afastamento.matricula,
+      equipe: afastamento.equipe,
+      status: afastamento.status,
+      inicio: afastamento.inicio,
+      retorno: afastamento.retorno,
+      obs: afastamento.obs
+    });
+    setEditingAbsenceId(afastamento.id);
+    setPolicialSearchTerm(afastamento.nome);
+    setIsAbsenceModalOpen(true);
+  };
+
+  const handlePolicialSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPolicialSearchTerm(value);
+    
+    if (value.length > 0) {
+      const filtered = policiais.filter(p => 
+        p.nome.toLowerCase().includes(value.toLowerCase()) || 
+        p.matricula.includes(value)
+      ).slice(0, 5);
+      setPolicialSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setPolicialSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectPolicialForAbsence = (policial: Policial) => {
+    setAbsenceFormData(prev => ({
+      ...prev,
+      nome: policial.nome,
+      matricula: policial.matricula,
+      equipe: policial.equipe
+    }));
+    setPolicialSearchTerm(policial.nome);
+    setShowSuggestions(false);
+  };
+
+  const handleAbsenceInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setAbsenceFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveAbsence = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!absenceFormData.nome || !absenceFormData.matricula) {
+      alert("Selecione um policial válido.");
+      return;
+    }
+    if (!absenceFormData.inicio || !absenceFormData.retorno) {
+      alert("Preencha as datas de início e retorno.");
+      return;
+    }
+
+    if (editingAbsenceId) {
+        setAfastamentos(prev => prev.map(a => a.id === editingAbsenceId ? { ...absenceFormData, id: editingAbsenceId, status: absenceFormData.status as any } : a));
+    } else {
+        const newAbsence: Afastamento = {
+            id: Date.now(),
+            ...absenceFormData,
+            status: absenceFormData.status as any
+        };
+        setAfastamentos(prev => [newAbsence, ...prev]);
+    }
+    
+    setIsAbsenceModalOpen(false);
+  };
+
+  const handleDeleteAbsence = (id: number) => {
+     if(window.confirm("Deseja remover este afastamento?")) {
+        setAfastamentos(prev => prev.filter(a => a.id !== id));
+     }
   };
 
   // --- Funções de Gerenciamento de Equipes ---
@@ -238,31 +317,15 @@ const AdminGestaoPoliciais = () => {
 
   const saveTeamName = () => {
     if (!newTeamName.trim() || !teamToEdit) return;
-    
     const oldName = teamToEdit;
     const newName = newTeamName.trim();
-
-    if (oldName === newName) {
-        setTeamToEdit(null);
-        return;
-    }
-
+    if (oldName === newName) { setTeamToEdit(null); return; }
     if (availableTeams.some(t => t.toLowerCase() === newName.toLowerCase() && t.toLowerCase() !== oldName.toLowerCase())) {
-        alert("Já existe uma equipe com este nome.");
-        return;
+        alert("Já existe uma equipe com este nome."); return;
     }
-
-    // Update availableTeams
     setAvailableTeams(prev => prev.map(t => t === oldName ? newName : t).sort());
-
-    // Update policemen associated with this team
     setPoliciais(prev => prev.map(p => p.equipe === oldName ? { ...p, equipe: newName } : p));
-
-    // Update filter if selected
-    if (selectedEquipe === oldName) {
-        setSelectedEquipe(newName);
-    }
-
+    if (selectedEquipe === oldName) setSelectedEquipe(newName);
     setTeamToEdit(null);
     setNewTeamName('');
   };
@@ -273,7 +336,6 @@ const AdminGestaoPoliciais = () => {
   };
 
   // --- Importação Excel ---
-
   const handleImportClick = () => {
     fileInputRef.current?.click();
   };
@@ -283,70 +345,45 @@ const AdminGestaoPoliciais = () => {
     if (file) {
       const fileName = file.name.toLowerCase();
       if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-        alert("Formato inválido. Por favor, selecione um arquivo Excel (.xlsx, .xls) ou CSV.");
+        alert("Formato inválido.");
         return;
       }
-
       try {
         const data = await file.arrayBuffer();
         const workbook = XLSX.read(data, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-        if (jsonData.length === 0) {
-            alert("O arquivo parece estar vazio ou não pôde ser lido.");
-            return;
-        }
-
+        if (jsonData.length === 0) { alert("Arquivo vazio."); return; }
         const novosPoliciais = jsonData.map((row: any) => {
             const normalizedRow: any = {};
-            Object.keys(row).forEach(key => {
-                normalizedRow[key.trim().toLowerCase()] = row[key];
-            });
-
+            Object.keys(row).forEach(key => normalizedRow[key.trim().toLowerCase()] = row[key]);
             return {
                 id: Date.now() + Math.random(),
-                nome: normalizedRow['policial'] || normalizedRow['nome'] || normalizedRow['nome completo'] || 'Sem Nome',
-                matricula: String(normalizedRow['matricula'] || normalizedRow['matrícula'] || normalizedRow['mat'] || '00000'),
-                equipe: normalizedRow['equipe'] || normalizedRow['pelotão'] || normalizedRow['pelotao'] || 'Alpha',
-                aniversario: normalizedRow['aniversário'] || normalizedRow['aniversario'] || normalizedRow['nascimento'] || normalizedRow['data nasc'] || '--/--',
-                telefone: String(normalizedRow['telefone'] || normalizedRow['celular'] || normalizedRow['contato'] || ''),
-                email: normalizedRow['email'] || normalizedRow['e-mail'] || ''
+                nome: normalizedRow['policial'] || normalizedRow['nome'] || 'Sem Nome',
+                matricula: String(normalizedRow['matricula'] || '00000'),
+                equipe: normalizedRow['equipe'] || 'Alpha',
+                aniversario: normalizedRow['aniversário'] || '--/--',
+                telefone: String(normalizedRow['telefone'] || ''),
+                email: normalizedRow['email'] || ''
             };
         }).filter((p: any) => p.nome !== 'Sem Nome' && p.matricula !== '00000');
-
         if (novosPoliciais.length > 0) {
             setPoliciais(prev => [...prev, ...novosPoliciais]);
-            // Atualizar lista de equipes com as importadas
             const importedTeams: string[] = Array.from(new Set(novosPoliciais.map((p: any) => String(p.equipe))));
             setAvailableTeams((prev: string[]) => {
                 const combined = new Set<string>([...prev, ...importedTeams]);
                 return Array.from(combined).sort();
             });
-
-            alert(`${novosPoliciais.length} policiais importados com sucesso!`);
-        } else {
-            alert("Nenhum dado válido encontrado. Verifique as colunas.");
-        }
-
-      } catch (error) {
-        console.error("Erro ao processar Excel:", error);
-        alert("Erro ao ler o arquivo.");
-      }
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+            alert(`${novosPoliciais.length} policiais importados!`);
+        } else { alert("Nenhum dado válido."); }
+      } catch (error) { alert("Erro ao ler arquivo."); }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Gestão de Policiais</h2>
-      </div>
-
-      {/* Cards de Estatísticas */}
+      {/* Cards de Estatísticas Atualizados */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"><span className="material-icons-round">groups</span></div>
@@ -354,125 +391,214 @@ const AdminGestaoPoliciais = () => {
         </div>
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-green-600"><span className="material-icons-round">check_circle</span></div>
-          <div><p className="text-xs font-bold text-slate-500 uppercase">Ativos</p><p className="text-2xl font-bold">{policiais.length}</p></div>
+          <div><p className="text-xs font-bold text-slate-500 uppercase">Ativos</p><p className="text-2xl font-bold">{policiais.length - afastamentos.length}</p></div>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600"><span className="material-icons-round">event_busy</span></div>
+          <div><p className="text-xs font-bold text-slate-500 uppercase">Afastados</p><p className="text-2xl font-bold">{afastamentos.length}</p></div>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600"><span className="material-icons-round">beach_access</span></div>
+          <div><p className="text-xs font-bold text-slate-500 uppercase">Férias</p><p className="text-2xl font-bold">{afastamentos.filter(a => a.status === 'Férias').length}</p></div>
         </div>
       </div>
 
-      {/* Barra de Ações e Filtros */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center">
+      {/* Barra de Ações, Abas e Filtros */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         {/* Busca */}
-        <div className="flex-1 relative w-full">
+        <div className="relative w-full md:w-80">
           <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
           <input 
-            className="w-full h-10 bg-white border border-slate-200 rounded-lg pl-10 pr-4 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-slate-400" 
-            placeholder="Pesquisar por Nome ou Matrícula..." 
+            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
+            placeholder={activeTab === 'POLICIAIS' ? "Pesquisar policial..." : "Pesquisar afastamento..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* Filtro de Equipe com Botão de Edição */}
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-48">
-            <select
-              value={selectedEquipe}
-              onChange={(e) => setSelectedEquipe(e.target.value)}
-              className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none"
-            >
-              <option value="TODAS">Todas as Equipes</option>
-              {availableTeams.map((team) => (
-                <option key={team} value={team}>{team}</option>
-              ))}
-            </select>
-            <span className="material-icons-round absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
-          </div>
+        {/* Seletor de Abas (Segmented Control) */}
+        <div className="flex bg-slate-100 p-1 rounded-lg">
           <button 
-            onClick={() => setIsTeamManagerOpen(true)}
-            className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm"
-            title="Gerenciar Nomes das Equipes"
+            onClick={() => setActiveTab('POLICIAIS')}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${activeTab === 'POLICIAIS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
           >
-            <span className="material-icons-round">edit_note</span>
+            Cadastro
+          </button>
+          <button 
+            onClick={() => setActiveTab('AFASTAMENTOS')}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${activeTab === 'AFASTAMENTOS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+          >
+            Afastamentos
           </button>
         </div>
-        
-        {/* Input Oculto para Arquivo */}
-        <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            className="hidden" 
-            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
-        />
 
-        {/* Botão Importar */}
-        <button 
-            onClick={handleImportClick}
-            className="bg-green-600 text-white px-4 h-10 rounded-lg font-bold text-xs uppercase hover:bg-green-700 transition-colors shadow-sm shadow-green-200 flex items-center gap-2 justify-center"
-        >
-            <span className="material-icons-round text-sm">upload_file</span>
-            Importar
-        </button>
+        {/* Ações Direita */}
+        <div className="flex gap-2 w-full md:w-auto">
+          {activeTab === 'POLICIAIS' && (
+            <>
+               <div className="relative">
+                <select
+                  value={selectedEquipe}
+                  onChange={(e) => setSelectedEquipe(e.target.value)}
+                  className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                >
+                  <option value="TODAS">Filtros</option>
+                  {availableTeams.map((team) => (
+                    <option key={team} value={team}>{team}</option>
+                  ))}
+                </select>
+              </div>
+              <button 
+                onClick={() => setIsTeamManagerOpen(true)}
+                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm"
+                title="Gerenciar Nomes das Equipes"
+              >
+                <span className="material-icons-round">edit_note</span>
+              </button>
+              
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
+              <button onClick={handleImportClick} className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors shadow-sm" title="Importar Excel">
+                  <span className="material-icons-round">upload_file</span>
+              </button>
+            </>
+          )}
 
-        {/* Botão Novo */}
-        <button onClick={handleNew} className="bg-blue-600 text-white px-6 h-10 rounded-lg font-bold text-xs uppercase hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 whitespace-nowrap">
-          Novo Registro
-        </button>
+           {activeTab === 'AFASTAMENTOS' && (
+             <div className="relative">
+                <select
+                  value={selectedEquipe}
+                  onChange={(e) => setSelectedEquipe(e.target.value)}
+                  className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                >
+                  <option value="TODAS">Filtros</option>
+                  {availableTeams.map((team) => (
+                    <option key={team} value={team}>{team}</option>
+                  ))}
+                </select>
+             </div>
+           )}
+
+          <button onClick={handleNew} className="bg-blue-600 text-white w-10 h-10 rounded-lg hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 flex items-center justify-center" title="Novo Registro">
+            <span className="material-icons-round">add</span>
+          </button>
+        </div>
       </div>
 
-      {/* Tabela */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        {filteredPoliciais.length > 0 ? (
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
-              <tr>
-                <th className="px-6 py-3 font-bold">Policial</th>
-                <th className="px-6 py-3 font-bold">Matrícula</th>
-                <th className="px-6 py-3 font-bold">Equipe/Setor</th>
-                <th className="px-6 py-3 font-bold">Aniversário</th>
-                <th className="px-6 py-3 font-bold">Telefone</th>
-                <th className="px-6 py-3 font-bold">Email</th>
-                <th className="px-6 py-3 font-bold text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredPoliciais.map((policial) => (
-                <tr key={policial.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 font-bold text-slate-800">{policial.nome}</td>
-                  <td className="px-6 py-4 font-mono text-slate-600">{policial.matricula}</td>
-                  <td className="px-6 py-4">
-                    <span className={`${getEquipeColor(policial.equipe)} px-2 py-1 rounded text-[10px] font-bold uppercase`}>
-                      {policial.equipe}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{policial.aniversario}</td>
-                  <td className="px-6 py-4 text-slate-600 text-xs">{policial.telefone}</td>
-                  <td className="px-6 py-4 text-slate-500 text-xs">{policial.email}</td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
-                        <span className="material-icons-round text-lg">edit</span>
-                      </button>
-                      <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
-                        <span className="material-icons-round text-lg">delete</span>
-                      </button>
-                    </div>
-                  </td>
+      {/* Conteúdo das Abas */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+        {activeTab === 'POLICIAIS' ? (
+          /* Tabela de Policiais */
+          filteredPoliciais.length > 0 ? (
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
+                <tr>
+                  <th className="px-6 py-3 font-bold">Policial</th>
+                  <th className="px-6 py-3 font-bold">Matrícula</th>
+                  <th className="px-6 py-3 font-bold">Equipe/Setor</th>
+                  <th className="px-6 py-3 font-bold">Aniversário</th>
+                  <th className="px-6 py-3 font-bold">Telefone</th>
+                  <th className="px-6 py-3 font-bold">Email</th>
+                  <th className="px-6 py-3 font-bold text-right">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredPoliciais.map((policial) => (
+                  <tr key={policial.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-bold text-slate-800">{policial.nome}</td>
+                    <td className="px-6 py-4 font-mono text-slate-600">{formatMatricula(policial.matricula)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`${getEquipeColor(policial.equipe)} px-2 py-1 rounded text-[10px] font-bold uppercase`}>
+                        {policial.equipe}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{policial.aniversario}</td>
+                    <td className="px-6 py-4 text-slate-600 text-xs">{policial.telefone}</td>
+                    <td className="px-6 py-4 text-slate-500 text-xs">{policial.email}</td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                          <span className="material-icons-round text-lg">edit</span>
+                        </button>
+                        <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
+                          <span className="material-icons-round text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 flex flex-col items-center justify-center text-center">
+              <span className="material-icons-round text-slate-300 text-5xl mb-3">search_off</span>
+              <p className="text-slate-500 font-medium">Nenhum policial encontrado.</p>
+              <p className="text-slate-400 text-xs mt-1">
+                {search ? 'Tente buscar por outro nome ou matrícula.' : 'Tente alterar o filtro de equipe.'}
+              </p>
+            </div>
+          )
         ) : (
-          <div className="p-12 flex flex-col items-center justify-center text-center">
-            <span className="material-icons-round text-slate-300 text-5xl mb-3">search_off</span>
-            <p className="text-slate-500 font-medium">Nenhum policial encontrado.</p>
-            <p className="text-slate-400 text-xs mt-1">
-              {search ? 'Tente buscar por outro nome ou matrícula.' : 'Tente alterar o filtro de equipe.'}
-            </p>
-          </div>
+          /* Tabela de Afastamentos */
+          <>
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
+                <tr>
+                  <th className="px-4 py-4 font-bold">Policial</th>
+                  <th className="px-4 py-4 font-bold">Matrícula</th>
+                  <th className="px-4 py-4 font-bold text-center">Equipe</th>
+                  <th className="px-4 py-4 font-bold text-center">Status</th>
+                  <th className="px-4 py-4 font-bold text-center">Data Início</th>
+                  <th className="px-4 py-4 font-bold text-center">Data Retorno</th>
+                  <th className="px-4 py-4 font-bold">Observações</th>
+                  <th className="px-4 py-4 font-bold text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredAfastamentos.map((afastamento) => (
+                  <tr key={afastamento.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4 font-bold text-slate-800 text-sm">{afastamento.nome}</td>
+                    <td className="px-4 py-4 font-mono text-slate-600 text-xs">{formatMatricula(afastamento.matricula)}</td>
+                    <td className="px-4 py-4 text-center">
+                       <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase border border-slate-200">
+                        {afastamento.equipe}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className={`${getStatusColor(afastamento.status)} px-2 py-1 rounded-full text-[10px] font-bold uppercase`}>
+                        {afastamento.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center text-slate-600 text-xs font-medium">{formatDate(afastamento.inicio)}</td>
+                    <td className="px-4 py-4 text-center text-slate-600 text-xs font-medium">{formatDate(afastamento.retorno)}</td>
+                    <td className="px-4 py-4 text-slate-500 text-xs max-w-xs truncate">{afastamento.obs}</td>
+                    <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => handleEditAbsence(afastamento)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                          <span className="material-icons-round text-lg">edit</span>
+                        </button>
+                        <button onClick={() => handleDeleteAbsence(afastamento.id)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
+                          <span className="material-icons-round text-lg">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Paginação Mockada */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between">
+               <span className="text-xs text-slate-400">Mostrando {filteredAfastamentos.length} registro(s)</span>
+               <div className="flex gap-1">
+                 <button className="px-3 py-1 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded hover:bg-slate-50">Anterior</button>
+                 <button className="px-3 py-1 text-xs font-bold text-white bg-blue-600 border border-blue-600 rounded">1</button>
+                 <button className="px-3 py-1 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded hover:bg-slate-50">Próximo</button>
+               </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Modal de Gerenciamento de Equipes */}
+      {/* Modal de Gerenciamento de Equipes (Mantido) */}
       {isTeamManagerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-[fadeIn_0.2s_ease-out]">
@@ -522,14 +648,11 @@ const AdminGestaoPoliciais = () => {
                     </tbody>
                 </table>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 text-xs text-center text-slate-500">
-                Ao renomear uma equipe, todos os policiais vinculados a ela serão atualizados automaticamente.
-            </div>
           </div>
         </div>
       )}
 
-      {/* Modal de Edição/Criação de Policial */}
+      {/* Modal de Novo/Editar Policial (Mantido) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-[fadeIn_0.2s_ease-out]">
@@ -557,93 +680,167 @@ const AdminGestaoPoliciais = () => {
                     required
                   />
                 </div>
-                
+                {/* Outros campos do form de policial mantidos */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Matrícula</label>
-                    <input 
-                      name="matricula"
-                      value={formData.matricula}
-                      onChange={handleInputChange}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" 
-                      placeholder="00000"
-                      required
-                    />
+                    <input name="matricula" value={formData.matricula} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="00000" required />
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <label className="block text-[10px] font-bold text-slate-500 uppercase">Equipe / Setor</label>
-                      <button 
-                        type="button" 
-                        onClick={() => setIsCustomTeam(!isCustomTeam)}
-                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase"
-                      >
-                        {isCustomTeam ? 'Selecionar da Lista' : '+ Nova Equipe'}
-                      </button>
+                      <button type="button" onClick={() => setIsCustomTeam(!isCustomTeam)} className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase">{isCustomTeam ? 'Selecionar da Lista' : '+ Nova Equipe'}</button>
                     </div>
                     {isCustomTeam ? (
-                      <input 
-                        name="equipe"
-                        value={formData.equipe}
-                        onChange={handleInputChange}
-                        className="w-full bg-white border border-blue-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none placeholder-slate-400"
-                        placeholder="Digite o nome da nova equipe..."
-                        autoFocus
-                      />
+                      <input name="equipe" value={formData.equipe} onChange={handleInputChange} className="w-full bg-white border border-blue-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none placeholder-slate-400" placeholder="Nova equipe..." />
                     ) : (
-                      <select 
-                        name="equipe"
-                        value={formData.equipe}
-                        onChange={handleInputChange}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
-                      >
-                        {availableTeams.map(team => (
-                          <option key={team} value={team}>{team}</option>
-                        ))}
+                      <select name="equipe" value={formData.equipe} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none">
+                        {availableTeams.map(team => (<option key={team} value={team}>{team}</option>))}
                       </select>
                     )}
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
                    <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Aniversário</label>
-                    <input 
-                      name="aniversario"
-                      value={formData.aniversario}
-                      onChange={handleInputChange}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" 
-                      placeholder="DD/MM"
-                    />
+                    <input name="aniversario" value={formData.aniversario} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="DD/MM" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Telefone</label>
+                    <input name="telefone" value={formData.telefone} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="(00) 00000-0000" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email</label>
+                  <input name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="email@pm.go.gov.br" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-2">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
+                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-colors">Salvar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Novo Afastamento (NOVO) */}
+      {isAbsenceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-visible animate-[fadeIn_0.2s_ease-out]">
+            <div className="bg-orange-600 p-5 flex justify-between items-center text-white rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <span className="material-icons-round text-2xl">event_busy</span>
+                <div>
+                  <h3 className="font-bold text-lg">{editingAbsenceId ? 'Editar Afastamento' : 'Registrar Afastamento'}</h3>
+                  <p className="text-[10px] opacity-80 uppercase tracking-wider">Gestão de Ausências</p>
+                </div>
+              </div>
+              <button onClick={() => setIsAbsenceModalOpen(false)} className="hover:bg-white/20 p-1 rounded transition-colors"><span className="material-icons-round">close</span></button>
+            </div>
+            
+            <form onSubmit={handleSaveAbsence} className="p-6 space-y-4">
+              <div className="space-y-4">
+                <div className="relative">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar Policial (Nome ou Matrícula)</label>
+                  <div className="relative">
                     <input 
-                      name="telefone"
-                      value={formData.telefone}
-                      onChange={handleInputChange}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" 
-                      placeholder="(00) 00000-0000"
+                      type="text"
+                      value={policialSearchTerm}
+                      onChange={handlePolicialSearch}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-orange-600 outline-none" 
+                      placeholder="Digite para buscar..."
+                      autoComplete="off"
+                    />
+                    <span className="material-icons-round absolute right-3 top-2 text-slate-400">search</span>
+                  </div>
+                  {showSuggestions && policialSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                        {policialSuggestions.map((p) => (
+                          <button 
+                            key={p.id}
+                            type="button" 
+                            onClick={() => selectPolicialForAbsence(p)}
+                            className="w-full text-left px-4 py-3 hover:bg-orange-50 flex justify-between items-center border-b border-slate-50 last:border-0"
+                          >
+                             <div>
+                                <span className="font-bold text-slate-800 text-xs block">{p.nome}</span>
+                                <span className="text-[10px] text-slate-500">{p.equipe}</span>
+                             </div>
+                             <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{p.matricula}</span>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Matrícula</label>
+                      <input name="matricula" value={absenceFormData.matricula} readOnly className="w-full bg-slate-100 border border-slate-200 rounded-lg px-4 py-2 text-xs font-mono text-slate-600 outline-none" />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Equipe</label>
+                      <input name="equipe" value={absenceFormData.equipe} readOnly className="w-full bg-slate-100 border border-slate-200 rounded-lg px-4 py-2 text-xs font-bold text-slate-600 outline-none uppercase" />
+                   </div>
+                </div>
+
+                <div>
+                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Afastamento</label>
+                   <select 
+                      name="status" 
+                      value={absenceFormData.status} 
+                      onChange={handleAbsenceInputChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-orange-600 outline-none"
+                   >
+                      <option value="Férias">Férias</option>
+                      <option value="Licença">Licença</option>
+                      <option value="Atestado">Atestado Médico</option>
+                      <option value="Outros">Outros</option>
+                   </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Início</label>
+                    <input 
+                      type="date"
+                      name="inicio"
+                      value={absenceFormData.inicio}
+                      onChange={handleAbsenceInputChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-orange-600 outline-none"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Retorno</label>
+                    <input 
+                      type="date"
+                      name="retorno"
+                      value={absenceFormData.retorno}
+                      onChange={handleAbsenceInputChange}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-orange-600 outline-none"
+                      required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email</label>
-                  <input 
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" 
-                    placeholder="email@pm.go.gov.br"
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações</label>
+                  <textarea 
+                    name="obs"
+                    value={absenceFormData.obs}
+                    onChange={handleAbsenceInputChange}
+                    rows={3}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-orange-600 outline-none resize-none"
+                    placeholder="Detalhes adicionais..."
                   />
                 </div>
               </div>
 
               <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-colors">Salvar</button>
+                <button type="button" onClick={() => setIsAbsenceModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
+                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-lg shadow-lg shadow-orange-200 transition-colors">Salvar</button>
               </div>
             </form>
           </div>
