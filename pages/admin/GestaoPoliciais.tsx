@@ -43,7 +43,7 @@ const AdminGestaoPoliciais = () => {
           </thead>
           <tbody className="divide-y divide-slate-100">
             <tr>
-              <td className="px-6 py-4 font-bold">1º Sgt S. Junior<br/><span className="text-xs text-slate-400 font-normal">Mat: 37.123</span></td>
+              <td className="px-6 py-4 font-bold">1º Sgt S. Junior<br/><span className="text-xs text-slate-400 font-normal">Mat: 37123</span></td>
               <td className="px-6 py-4"><span className="bg-slate-100 px-2 py-1 rounded text-xs font-bold uppercase text-slate-600">Alpha</span></td>
               <td className="px-6 py-4">1º Sargento</td>
               <td className="px-6 py-4 text-center"><span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">Ativo</span></td>

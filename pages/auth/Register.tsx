@@ -13,7 +13,13 @@ const Register = () => {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    
+    // Tratamento especial para matrícula: apenas números e max 5 dígitos
+    if (name === 'matricula') {
+      value = value.replace(/\D/g, '').slice(0, 5);
+    }
+    
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -25,6 +31,10 @@ const Register = () => {
     e.preventDefault();
     if (!formData.nome || !formData.matricula || !formData.nomeGuerra) {
       alert("Preencha os campos obrigatórios.");
+      return;
+    }
+    if (formData.matricula.length !== 5) {
+      alert("A matrícula deve conter exatamente 5 dígitos numéricos.");
       return;
     }
     console.log("Dados do Registro:", formData);
@@ -91,7 +101,8 @@ const Register = () => {
                   value={formData.matricula}
                   onChange={handleChange}
                   className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 outline-none" 
-                  placeholder="12345" 
+                  placeholder="00000"
+                  maxLength={5}
                 />
               </div>
               <div>

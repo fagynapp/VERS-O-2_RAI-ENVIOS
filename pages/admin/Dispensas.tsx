@@ -54,13 +54,13 @@ const Overview = () => (
         <tbody className="divide-y divide-slate-100">
           <tr>
             <td className="px-6 py-4 font-bold text-slate-900">Sub-Ten. Marcelo Rocha</td>
-            <td className="px-6 py-4 text-slate-600">33.000</td>
+            <td className="px-6 py-4 text-slate-600">33000</td>
             <td className="px-6 py-4"><span className="bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded text-[10px]">CPC</span></td>
             <td className="px-6 py-4"><span className="text-blue-600 font-bold text-[11px] uppercase flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Processado</span></td>
           </tr>
           <tr>
             <td className="px-6 py-4 font-bold text-slate-900">1º Sgt. Oliveira Santos</td>
-            <td className="px-6 py-4 text-slate-600">35.137</td>
+            <td className="px-6 py-4 text-slate-600">35137</td>
             <td className="px-6 py-4"><span className="bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded text-[10px]">PROD</span></td>
             <td className="px-6 py-4"><span className="text-green-600 font-bold text-[11px] uppercase flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-600"></span> Liberado</span></td>
           </tr>
@@ -121,7 +121,7 @@ const FilaCPC = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">Liberado Agora</span>
-              <span className="text-slate-400 text-xs font-medium">Mat: 33.120-5</span>
+              <span className="text-slate-400 text-xs font-medium">Mat: 33120</span>
             </div>
             <h3 className="text-xl font-black text-slate-900 uppercase">Sub-Ten. Marcelo Rocha</h3>
             <p className="text-slate-500 text-sm">Equipe {equipe} • 2.140 Pontos</p>
