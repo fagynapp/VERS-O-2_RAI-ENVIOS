@@ -409,11 +409,19 @@ const AdminGestaoPoliciais = () => {
         <div className="relative w-full md:w-80">
           <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
           <input 
-            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
+            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
             placeholder={activeTab === 'POLICIAIS' ? "Pesquisar policial..." : "Pesquisar afastamento..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {search && (
+            <button 
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+            >
+              <span className="material-icons-round text-lg">close</span>
+            </button>
+          )}
         </div>
 
         {/* Seletor de Abas (Segmented Control) */}
