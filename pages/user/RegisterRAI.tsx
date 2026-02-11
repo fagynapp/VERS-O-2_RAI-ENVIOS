@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const RegisterRAI = () => {
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     raiNumber: '',
     dataOcorrencia: '',
@@ -9,14 +11,37 @@ const RegisterRAI = () => {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+
+    // Restrição para apenas números e máximo de 8 dígitos no campo RAI
+    if (name === 'raiNumber') {
+      value = value.replace(/\D/g, '').slice(0, 8);
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dateInputRef.current) {
+      if ('showPicker' in HTMLInputElement.prototype) {
+        try {
+          dateInputRef.current.showPicker();
+        } catch (error) {
+          console.warn('showPicker error:', error);
+          dateInputRef.current.focus();
+        }
+      } else {
+        dateInputRef.current.focus();
+      }
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.raiNumber.length < 8) {
-      alert("O número do RAI deve conter pelo menos 8 dígitos.");
+    if (formData.raiNumber.length !== 8) {
+      alert("O número do RAI deve conter exatamente 8 dígitos.");
       return;
     }
     if (!formData.dataOcorrencia) {
@@ -70,19 +95,47 @@ const RegisterRAI = () => {
                     onChange={handleChange}
                     className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm" 
                     placeholder="00000000" 
-                    type="text" 
+                    type="text"
+                    maxLength={8}
+                    inputMode="numeric"
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Data da Ocorrência</label>
-                <input 
-                  name="dataOcorrencia"
-                  value={formData.dataOcorrencia}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm" 
-                  type="date" 
-                />
+                <div className="relative group">
+                  <style>
+                    {`
+                      input[type="date"]::-webkit-calendar-picker-indicator {
+                        opacity: 0;
+                        width: 100%;
+                        height: 100%;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        cursor: pointer;
+                      }
+                    `}
+                  </style>
+                  <input 
+                    ref={dateInputRef}
+                    name="dataOcorrencia"
+                    value={formData.dataOcorrencia}
+                    onChange={handleChange}
+                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm cursor-pointer" 
+                    type="date"
+                    style={{ colorScheme: 'light' }}
+                    onClick={handleDateClick}
+                  />
+                  <div 
+                    onClick={handleDateClick}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer p-1 rounded-full hover:bg-slate-200 transition-colors z-20"
+                  >
+                    <span className="material-icons-round text-slate-400 text-2xl hover:text-blue-600">
+                      calendar_month
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 
