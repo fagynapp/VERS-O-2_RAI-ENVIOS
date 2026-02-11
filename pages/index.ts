@@ -4,6 +4,7 @@ export { default as UserDashboard } from './user/UserDashboard';
 export { default as RegisterRAI } from './user/RegisterRAI';
 export { default as UserHistory } from './user/UserHistory';
 export { default as UserCalendar } from './user/UserCalendar';
+export { default as UserTelefones } from './user/Telefones';
 export { default as AdminDashboard } from './admin/Dashboard';
 export { default as AdminDispensas } from './admin/Dispensas';
 export { default as AdminEscala } from './admin/EscalaCalendario';

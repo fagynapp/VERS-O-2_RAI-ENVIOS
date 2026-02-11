@@ -7,6 +7,7 @@ import {
   RegisterRAI, 
   UserHistory, 
   UserCalendar,
+  UserTelefones,
   AdminDashboard,
   AdminDispensas,
   AdminEscala,
@@ -123,6 +124,7 @@ const UserLayout = () => {
           <SidebarItem icon="calendar_month" label="Calendário" to="/user/calendario" active={isActive('/user/calendario')} />
           <SidebarItem icon="description" label="Registrar RAI" to="/user/registro" active={isActive('/user/registro')} />
           <SidebarItem icon="history" label="Meu Histórico" to="/user/historico" active={isActive('/user/historico')} />
+          <SidebarItem icon="phone" label="Telefones" to="/user/telefones" active={isActive('/user/telefones')} />
         </nav>
 
         <div className="p-4 border-t border-slate-100">
@@ -189,6 +191,7 @@ const App = () => {
             <Route path="calendario" element={<UserCalendar />} />
             <Route path="registro" element={<RegisterRAI />} />
             <Route path="historico" element={<UserHistory />} />
+            <Route path="telefones" element={<UserTelefones />} />
           </Route>
 
           {/* Fallback */}
