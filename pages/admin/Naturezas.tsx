@@ -1,52 +1,9 @@
 import React, { useState } from 'react';
-
-interface NaturezaItem {
-  id: number;
-  natureza: string;
-  descricao: string;
-  pontos: number;
-  nga: string;
-  ativo: boolean;
-}
-
-const INITIAL_DATA: NaturezaItem[] = [
-  { 
-    id: 1, 
-    natureza: 'Prisão em Flagrante', 
-    descricao: 'Homicídio / Latrocínio / Estupro', 
-    pontos: 50, 
-    nga: 'Portaria Nº 22/2024', 
-    ativo: true 
-  },
-  { 
-    id: 2, 
-    natureza: 'Apreensão de Arma', 
-    descricao: 'Arma de fogo (qualquer calibre)', 
-    pontos: 30, 
-    nga: 'Portaria Nº 22/2024', 
-    ativo: true 
-  },
-  { 
-    id: 3, 
-    natureza: 'Recuperação de Veículo', 
-    descricao: 'Veículo com registro de furto/roubo', 
-    pontos: 20, 
-    nga: 'Portaria Nº 22/2024', 
-    ativo: true 
-  },
-  { 
-    id: 4, 
-    natureza: 'TCO', 
-    descricao: 'Termo Circunstanciado de Ocorrência', 
-    pontos: 10, 
-    nga: 'Portaria Nº 22/2024', 
-    ativo: false 
-  },
-];
+import { usePoliceData, NaturezaItem } from '../../contexts/PoliceContext';
 
 const AdminNatureza = () => {
+  const { naturezas, setNaturezas } = usePoliceData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [data, setData] = useState<NaturezaItem[]>(INITIAL_DATA);
 
   // Estados do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,22 +18,22 @@ const AdminNatureza = () => {
 
   // Estatísticas Dinâmicas
   const stats = {
-    total: data.length,
-    ativas: data.filter(i => i.ativo).length,
-    inativas: data.filter(i => !i.ativo).length,
-    mediaPontos: data.length > 0 ? Math.round(data.reduce((acc, cur) => acc + cur.pontos, 0) / data.length) : 0
+    total: naturezas.length,
+    ativas: naturezas.filter(i => i.ativo).length,
+    inativas: naturezas.filter(i => !i.ativo).length,
+    mediaPontos: naturezas.length > 0 ? Math.round(naturezas.reduce((acc, cur) => acc + cur.pontos, 0) / naturezas.length) : 0
   };
 
   // Handlers Principais
   const toggleStatus = (id: number) => {
-    setData(prev => prev.map(item => 
+    setNaturezas(prev => prev.map(item => 
       item.id === id ? { ...item, ativo: !item.ativo } : item
     ));
   };
 
   const handleDelete = (id: number) => {
     if(window.confirm("Deseja realmente excluir esta natureza?")) {
-      setData(prev => prev.filter(item => item.id !== id));
+      setNaturezas(prev => prev.filter(item => item.id !== id));
     }
   };
 
@@ -114,7 +71,7 @@ const AdminNatureza = () => {
 
     if (editingId) {
       // Editar existente
-      setData(prev => prev.map(item => 
+      setNaturezas(prev => prev.map(item => 
         item.id === editingId ? { ...item, ...formData, id: editingId } : item
       ));
     } else {
@@ -123,12 +80,12 @@ const AdminNatureza = () => {
         id: Date.now(),
         ...formData
       };
-      setData(prev => [newItem, ...prev]);
+      setNaturezas(prev => [newItem, ...prev]);
     }
     setIsModalOpen(false);
   };
 
-  const filteredData = data.filter(item => 
+  const filteredData = naturezas.filter(item => 
     item.natureza.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
   );

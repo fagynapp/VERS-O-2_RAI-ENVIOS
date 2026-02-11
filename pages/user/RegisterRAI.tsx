@@ -1,14 +1,29 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { usePoliceData } from '../../contexts/PoliceContext';
 
 const RegisterRAI = () => {
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const { naturezas, setUserPoints } = usePoliceData();
   
+  // Filtra apenas naturezas ativas para exibição
+  const activeNaturezas = naturezas.filter(n => n.ativo);
+
   const [formData, setFormData] = useState({
     raiNumber: '',
     dataOcorrencia: '',
-    natureza: 'Prisão em flagrante – homicídio/latrocínio (50 pts)',
+    natureza: '', // Inicializa vazio para forçar seleção ou usa o primeiro item no useEffect
     obs: ''
   });
+
+  // Inicializa o select com o primeiro valor disponível se houver
+  useEffect(() => {
+    if (activeNaturezas.length > 0 && !formData.natureza) {
+       setFormData(prev => ({ 
+           ...prev, 
+           natureza: `${activeNaturezas[0].natureza} (${activeNaturezas[0].pontos} pts)` 
+       }));
+    }
+  }, [activeNaturezas]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     let { name, value } = e.target;
@@ -49,14 +64,25 @@ const RegisterRAI = () => {
       return;
     }
     
+    // Extrair os pontos da string da natureza selecionada
+    // Formato esperado: "Nome da Natureza (XX pts)"
+    const selectedNaturezaObj = activeNaturezas.find(
+        n => `${n.natureza} (${n.pontos} pts)` === formData.natureza
+    );
+    
+    const pontos = selectedNaturezaObj ? selectedNaturezaObj.pontos : 0;
+
+    // Atualiza a pontuação global
+    setUserPoints(prev => prev + pontos);
+
     // Simulação de envio
-    alert(`RAI ${formData.raiNumber} registrado com sucesso!`);
+    alert(`RAI ${formData.raiNumber} registrado com sucesso! +${pontos} pontos adicionados.`);
     
     // Reset form
     setFormData({
       raiNumber: '',
       dataOcorrencia: '',
-      natureza: 'Prisão em flagrante – homicídio/latrocínio (50 pts)',
+      natureza: activeNaturezas.length > 0 ? `${activeNaturezas[0].natureza} (${activeNaturezas[0].pontos} pts)` : '',
       obs: ''
     });
   };
@@ -148,9 +174,12 @@ const RegisterRAI = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm appearance-none"
                 >
-                  <option>Prisão em flagrante – homicídio/latrocínio (50 pts)</option>
-                  <option>Apreensão de armas de fogo (30 pts)</option>
-                  <option>Recuperação de veículo roubado (20 pts)</option>
+                  {activeNaturezas.map(natureza => (
+                      <option key={natureza.id} value={`${natureza.natureza} (${natureza.pontos} pts)`}>
+                          {natureza.natureza} ({natureza.pontos} pts)
+                      </option>
+                  ))}
+                  {activeNaturezas.length === 0 && <option value="">Nenhuma natureza disponível</option>}
                 </select>
                 <span className="material-icons-round absolute right-3 top-3 text-slate-400">expand_more</span>
               </div>

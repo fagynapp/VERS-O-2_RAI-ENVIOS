@@ -20,7 +20,7 @@ import {
   AdminBancoDados,
   AdminConfiguracoes
 } from './pages';
-import { PoliceProvider } from './contexts/PoliceContext';
+import { PoliceProvider, usePoliceData } from './contexts/PoliceContext';
 
 // --- Components ---
 
@@ -104,6 +104,9 @@ const AdminLayout = () => {
 const UserLayout = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  
+  // Consumindo dados do contexto
+  const { userPoints } = usePoliceData();
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -144,7 +147,7 @@ const UserLayout = () => {
           <div className="flex items-center gap-6">
             <div className="text-right">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Saldo Atual</p>
-              <p className="text-lg font-bold text-blue-600 leading-none">0 <span className="text-xs">PTS</span></p>
+              <p className="text-lg font-bold text-blue-600 leading-none">{userPoints} <span className="text-xs">PTS</span></p>
             </div>
             <button className="relative">
               <span className="material-icons-round text-slate-400">notifications</span>

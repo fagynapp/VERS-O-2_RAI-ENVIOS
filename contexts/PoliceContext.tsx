@@ -10,11 +10,25 @@ export interface Policial {
   email: string;
 }
 
+export interface NaturezaItem {
+  id: number;
+  natureza: string;
+  descricao: string;
+  pontos: number;
+  nga: string;
+  ativo: boolean;
+}
+
 interface PoliceContextData {
   policiais: Policial[];
   setPoliciais: React.Dispatch<React.SetStateAction<Policial[]>>;
   availableTeams: string[];
   setAvailableTeams: React.Dispatch<React.SetStateAction<string[]>>;
+  // Novos estados globais
+  naturezas: NaturezaItem[];
+  setNaturezas: React.Dispatch<React.SetStateAction<NaturezaItem[]>>;
+  userPoints: number;
+  setUserPoints: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const PoliceContext = createContext<PoliceContextData>({} as PoliceContextData);
@@ -23,6 +37,41 @@ const PoliceContext = createContext<PoliceContextData>({} as PoliceContextData);
 const INITIAL_TEAMS = [
   'Alpha', 'Bravo', 'Charlie', 'Delta', 'P2', 'P3', 'P4', 
   'Adjunto', 'TCO', 'Região 44', 'Manutenção', 'Comando', 'SubCmt', 'MOT CMT'
+];
+
+const INITIAL_NATUREZAS: NaturezaItem[] = [
+  { 
+    id: 1, 
+    natureza: 'Prisão em Flagrante', 
+    descricao: 'Homicídio / Latrocínio / Estupro', 
+    pontos: 50, 
+    nga: 'Portaria Nº 22/2024', 
+    ativo: true 
+  },
+  { 
+    id: 2, 
+    natureza: 'Apreensão de Arma', 
+    descricao: 'Arma de fogo (qualquer calibre)', 
+    pontos: 30, 
+    nga: 'Portaria Nº 22/2024', 
+    ativo: true 
+  },
+  { 
+    id: 3, 
+    natureza: 'Recuperação de Veículo', 
+    descricao: 'Veículo com registro de furto/roubo', 
+    pontos: 20, 
+    nga: 'Portaria Nº 22/2024', 
+    ativo: true 
+  },
+  { 
+    id: 4, 
+    natureza: 'TCO', 
+    descricao: 'Termo Circunstanciado de Ocorrência', 
+    pontos: 10, 
+    nga: 'Portaria Nº 22/2024', 
+    ativo: false 
+  },
 ];
 
 const initialPoliciais: Policial[] = [
@@ -121,9 +170,24 @@ const initialPoliciais: Policial[] = [
 export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
   const [policiais, setPoliciais] = useState<Policial[]>(initialPoliciais);
   const [availableTeams, setAvailableTeams] = useState<string[]>(INITIAL_TEAMS);
+  
+  // Estado para Naturezas (Compartilhado entre Admin e User)
+  const [naturezas, setNaturezas] = useState<NaturezaItem[]>(INITIAL_NATUREZAS);
+  
+  // Estado para Pontuação do Usuário (Sessão atual)
+  const [userPoints, setUserPoints] = useState<number>(0);
 
   return (
-    <PoliceContext.Provider value={{ policiais, setPoliciais, availableTeams, setAvailableTeams }}>
+    <PoliceContext.Provider value={{ 
+      policiais, 
+      setPoliciais, 
+      availableTeams, 
+      setAvailableTeams,
+      naturezas,
+      setNaturezas,
+      userPoints,
+      setUserPoints
+    }}>
       {children}
     </PoliceContext.Provider>
   );
