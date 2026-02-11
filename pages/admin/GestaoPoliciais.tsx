@@ -428,14 +428,16 @@ const AdminGestaoPoliciais = () => {
         <div className="flex bg-slate-100 p-1 rounded-lg">
           <button 
             onClick={() => setActiveTab('POLICIAIS')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${activeTab === 'POLICIAIS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'POLICIAIS' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}
           >
+            <span className="material-icons-round text-sm">badge</span>
             Cadastro
           </button>
           <button 
             onClick={() => setActiveTab('AFASTAMENTOS')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all ${activeTab === 'AFASTAMENTOS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'AFASTAMENTOS' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500 hover:text-red-600'}`}
           >
+            <span className="material-icons-round text-sm">event_busy</span>
             Afastamentos
           </button>
         </div>
@@ -486,7 +488,7 @@ const AdminGestaoPoliciais = () => {
              </div>
            )}
 
-          <button onClick={handleNew} className="bg-blue-600 text-white w-10 h-10 rounded-lg hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 flex items-center justify-center" title="Novo Registro">
+          <button onClick={handleNew} className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors shadow-sm" title="Novo Registro">
             <span className="material-icons-round">add</span>
           </button>
         </div>

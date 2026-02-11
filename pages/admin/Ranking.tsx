@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { usePoliceData } from '../../contexts/PoliceContext';
 
@@ -50,7 +50,8 @@ const AdminRanking = () => {
   // --- Estados do Modal de Exportação ---
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState<'excel' | 'pdf'>('excel');
-  const [exportTeam, setExportTeam] = useState('TODAS');
+  // Alterado de string única para array de strings para permitir múltiplas seleções
+  const [selectedExportTeams, setSelectedExportTeams] = useState<string[]>([]);
 
   // Inicializa com o mês atual
   useEffect(() => {
@@ -276,28 +277,41 @@ const AdminRanking = () => {
 
   // --- Lógica de Exportação ---
   const handleOpenExportModal = () => {
-      // Sincroniza a equipe selecionada na tela com o modal
-      setExportTeam(selectedEquipe);
+      // Pré-seleciona as equipes no modal baseado no filtro atual da tela
+      if (selectedEquipe === 'TODAS') {
+        setSelectedExportTeams([...availableTeams]); // Seleciona todas
+      } else {
+        setSelectedExportTeams([selectedEquipe]); // Seleciona apenas a atual
+      }
       setShowExportModal(true);
   };
 
   const processExport = () => {
-    // 1. Filtra os dados baseados na equipe selecionada no MODAL
-    // Usa a lista global (rankingList) para permitir exportar uma equipe inteira 
-    // mesmo que a tela esteja filtrada por busca de nome.
+    if (selectedExportTeams.length === 0) {
+        alert("Selecione pelo menos uma equipe para exportar.");
+        return;
+    }
+
+    // Filtra os dados baseados nas equipes selecionadas (checkboxes)
+    // Usa a lista global (rankingList) para ter acesso a todos os dados antes do filtro
     const dataToExport = rankingList.filter(item => {
-        if (exportTeam === 'TODAS') return true;
-        // Comparação segura (case-insensitive)
-        return item.equipe?.trim().toLowerCase() === exportTeam.trim().toLowerCase();
+        const itemEquipe = item.equipe?.trim().toLowerCase();
+        return selectedExportTeams.some(team => team.trim().toLowerCase() === itemEquipe);
     });
 
     if (dataToExport.length === 0) {
-        alert("Não há dados para exportar com os filtros selecionados.");
+        alert("Não há dados para exportar com as equipes selecionadas.");
         return;
     }
 
     const dateStr = new Date().toISOString().split('T')[0];
-    const filename = `Ranking_Resultados_${exportTeam}_${dateStr}`;
+    
+    // Define sufixo do nome do arquivo
+    let teamLabel = "Geral";
+    if (selectedExportTeams.length === 1) teamLabel = selectedExportTeams[0];
+    else if (selectedExportTeams.length < availableTeams.length) teamLabel = "Multiplas_Equipes";
+
+    const filename = `Ranking_Resultados_${teamLabel}_${dateStr}`;
 
     if (exportFormat === 'excel') {
         const exportData = dataToExport.map((item, index) => ({
@@ -317,11 +331,15 @@ const AdminRanking = () => {
     else if (exportFormat === 'pdf') {
         const doc = new jsPDF();
         
+        let headerTeams = selectedExportTeams.length === availableTeams.length ? 'TODAS' : selectedExportTeams.join(', ');
+        if (headerTeams.length > 70) headerTeams = headerTeams.substring(0, 67) + '...';
+
         // Título
         doc.setFontSize(16);
         doc.text("Relatório de Ranking - RAI ENVIOS", 14, 15);
         doc.setFontSize(10);
-        doc.text(`Equipe: ${exportTeam} | Data: ${dateStr}`, 14, 22);
+        doc.text(`Equipe(s): ${headerTeams}`, 14, 22);
+        doc.text(`Data Emissão: ${dateStr}`, 14, 27);
 
         // Tabela
         const tableBody = dataToExport.map((item, index) => [
@@ -336,7 +354,7 @@ const AdminRanking = () => {
         autoTable(doc, {
             head: [['Pos', 'Policial', 'Matrícula', 'Equipe', 'RAIs', 'Pontos']],
             body: tableBody,
-            startY: 25,
+            startY: 32,
             theme: 'grid',
             headStyles: { fillColor: [37, 99, 235] }, // Blue-600
         });
@@ -349,10 +367,7 @@ const AdminRanking = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Ranking de Resultados</h2>
-        <p className="text-sm text-slate-500 mt-1">Produtividade operacional e pontuação por período.</p>
-      </div>
+      {/* Título removido */}
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -408,7 +423,7 @@ const AdminRanking = () => {
            <div className="relative date-picker-container">
               <button 
                 onClick={() => setShowDatePickerMenu(!showDatePickerMenu)}
-                className="h-10 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+                className="h-10 px-4 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
               >
                 <span className="material-icons-round text-lg text-slate-400">calendar_month</span>
                 <span>{activeFilterLabel}</span>
@@ -422,7 +437,7 @@ const AdminRanking = () => {
                     <button 
                       key={idx}
                       onClick={() => handleFilterClick(option.label, option.action)}
-                      className="w-full text-left px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center justify-between"
+                      className="w-full text-left px-4 py-2 text-xs font-bold uppercase text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors flex items-center justify-between"
                     >
                       {option.label}
                       {activeFilterLabel === option.label && <span className="material-icons-round text-blue-600 text-xs">check</span>}
@@ -431,7 +446,7 @@ const AdminRanking = () => {
                   <div className="border-t border-slate-100 my-1"></div>
                   <button 
                     onClick={() => handleFilterClick('Personalizado')}
-                    className="w-full text-left px-4 py-2 text-sm font-bold text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-xs font-bold uppercase text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-2"
                   >
                     <span className="material-icons-round text-base">date_range</span>
                     Personalizado
@@ -445,7 +460,7 @@ const AdminRanking = () => {
               <select
                 value={selectedEquipe}
                 onChange={(e) => setSelectedEquipe(e.target.value)}
-                className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[150px]"
+                className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-xs font-bold uppercase text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[150px]"
               >
                 <option value="TODAS">TODAS AS EQUIPES</option>
                 {availableTeams.map((team) => (
@@ -454,7 +469,7 @@ const AdminRanking = () => {
               </select>
            </div>
            
-           <button onClick={handleOpenExportModal} className="h-10 px-4 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-900 transition-colors flex items-center gap-2">
+           <button onClick={handleOpenExportModal} className="h-10 px-4 bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-slate-900 transition-colors flex items-center gap-2">
              <span className="material-icons-round text-lg">download</span>
              <span className="hidden md:inline">Exportar</span>
            </button>
@@ -737,19 +752,40 @@ const AdminRanking = () => {
                         </div>
                     </div>
 
-                    {/* Seleção de Equipe (Filtro) */}
+                    {/* Seleção de Equipes (Multi-select) */}
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Filtrar por Equipe</label>
-                        <select 
-                            value={exportTeam}
-                            onChange={(e) => setExportTeam(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                        >
-                            <option value="TODAS">TODAS AS EQUIPES</option>
+                        <div className="flex justify-between items-end mb-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase">Filtrar por Equipe(s)</label>
+                            <button 
+                              onClick={() => {
+                                if (selectedExportTeams.length === availableTeams.length) setSelectedExportTeams([]);
+                                else setSelectedExportTeams([...availableTeams]);
+                              }}
+                              className="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {selectedExportTeams.length === availableTeams.length ? 'Desmarcar Todas' : 'Marcar Todas'}
+                            </button>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-slate-50 grid grid-cols-2 gap-2">
                             {availableTeams.map(team => (
-                                <option key={team} value={team}>{team}</option>
+                                <label key={team} className={`flex items-center gap-2 p-2 rounded cursor-pointer border transition-all ${selectedExportTeams.includes(team) ? 'bg-blue-50 border-blue-200' : 'hover:bg-white border-transparent'}`}>
+                                    <input 
+                                        type="checkbox"
+                                        checked={selectedExportTeams.includes(team)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedExportTeams(prev => [...prev, team]);
+                                            } else {
+                                                setSelectedExportTeams(prev => prev.filter(t => t !== team));
+                                            }
+                                        }}
+                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-slate-300"
+                                    />
+                                    <span className={`text-xs font-bold uppercase ${selectedExportTeams.includes(team) ? 'text-blue-700' : 'text-slate-600'}`}>{team}</span>
+                                </label>
                             ))}
-                        </select>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-2 text-right">{selectedExportTeams.length} equipes selecionadas</p>
                     </div>
 
                     <button 

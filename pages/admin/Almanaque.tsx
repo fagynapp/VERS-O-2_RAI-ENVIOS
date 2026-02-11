@@ -144,10 +144,7 @@ const AdminAlmanaque = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Almanaque de Antiguidade</h2>
-        <p className="text-sm text-slate-500 mt-1">Lista completa do efetivo em ordem de precedência hierárquica.</p>
-      </div>
+      {/* Título removido */}
 
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-4 gap-6">

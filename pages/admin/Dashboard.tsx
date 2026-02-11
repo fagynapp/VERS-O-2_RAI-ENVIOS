@@ -4,10 +4,7 @@ import { BarChart, Bar, ResponsiveContainer } from 'recharts'; // Mock
 const AdminDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Painel Geral</h2>
-        <p className="text-sm text-slate-500 mt-1">Visão geral da produtividade e dispensas do batalhão.</p>
-      </div>
+      {/* Título removido conforme solicitado */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">

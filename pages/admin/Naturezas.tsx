@@ -135,10 +135,7 @@ const AdminNatureza = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Registrar Natureza</h2>
-        <p className="text-sm text-slate-500 mt-1">Cadastre/edite naturezas e pontuação do RAI.</p>
-      </div>
+      {/* Título removido */}
       
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -191,11 +188,12 @@ const AdminNatureza = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex justify-between items-center">
-        <div className="relative w-96">
+      {/* Barra de Ferramentas (Padronizada com Auditoria) */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between z-20 relative">
+        <div className="relative w-full md:w-80">
             <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
             <input 
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" 
+              className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
               placeholder="Pesquisar natureza ou descrição..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -209,10 +207,17 @@ const AdminNatureza = () => {
               </button>
             )}
         </div>
-        <button onClick={handleAddNew} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide hover:bg-blue-700 shadow-sm flex items-center gap-2">
-            <span className="material-icons-round text-lg">add</span>
-            Nova Natureza
-        </button>
+        
+        {/* Botão de Ação Estilizado como Aba Ativa (Padrão Auditoria) */}
+        <div className="flex bg-slate-100 p-1 rounded-lg">
+            <button 
+                onClick={handleAddNew} 
+                className="px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+            >
+                <span className="material-icons-round text-sm">add</span>
+                Nova Natureza
+            </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

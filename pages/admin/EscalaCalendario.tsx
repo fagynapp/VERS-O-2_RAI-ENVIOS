@@ -343,10 +343,6 @@ const AdminEscala = () => {
 
   return (
     <div className="space-y-6 relative">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Escala & Calendário</h2>
-      </div>
-
       {/* Cards de Estatísticas */}
       <div className="grid grid-cols-4 gap-4">
         {[

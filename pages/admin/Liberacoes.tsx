@@ -276,10 +276,7 @@ const AdminLiberacoes = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900">Gestão de Liberações</h2>
-        <p className="text-slate-500 text-sm mt-1">Revalidação de RAIs expirados (acima de 90 dias) para uso em produtividade.</p>
-      </div>
+      {/* Título removido */}
 
       {/* DASHBOARD DE RESUMO (Novo) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
