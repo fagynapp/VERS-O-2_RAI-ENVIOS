@@ -8,6 +8,9 @@ const UserHistory = () => {
   // Lógica de Filtragem
   const filteredRecords = userRaiRecords.filter(record => {
     if (activeFilter === 'TODOS') return true;
+    // Agrupa EXPIRADO junto com REPROVADO se desejar, ou mantém separado. 
+    // Aqui assumiremos que o filtro 'REPROVADO' pode ver 'EXPIRADO' ou criar um novo filtro.
+    // Para simplificar, se não houver filtro explicito, mostra apenas o exato.
     return record.status === activeFilter;
   });
 
@@ -16,6 +19,7 @@ const UserHistory = () => {
       case 'PENDENTE': return 'bg-orange-50 text-orange-600 border-orange-100';
       case 'APROVADO': return 'bg-green-50 text-green-600 border-green-100';
       case 'REPROVADO': return 'bg-red-50 text-red-600 border-red-100';
+      case 'EXPIRADO': return 'bg-red-600 text-white border-red-600'; // Estilo atualizado: Vermelho Sólido + Texto Branco
       default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
@@ -53,7 +57,7 @@ const UserHistory = () => {
         {/* Filtros */}
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mr-2">Filtros:</span>
-          {['TODOS', 'PENDENTE', 'APROVADO', 'REPROVADO'].map((filter) => (
+          {['TODOS', 'PENDENTE', 'APROVADO', 'REPROVADO', 'EXPIRADO'].map((filter) => (
             <button 
               key={filter} 
               onClick={() => setActiveFilter(filter)}
@@ -97,8 +101,8 @@ const UserHistory = () => {
                                     {formatDate(record.dataOcorrencia)}
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                    <span className="bg-blue-50 text-blue-700 font-black px-2 py-1 rounded text-[11px] border border-blue-100">
-                                        +{record.pontos} <span className="text-[9px] opacity-70">PTS</span>
+                                    <span className={`font-black px-2 py-1 rounded text-[11px] border ${record.status === 'EXPIRADO' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                        {record.status === 'EXPIRADO' ? '+0' : `+${record.pontos}`} <span className="text-[9px] opacity-70">PTS</span>
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
@@ -124,7 +128,7 @@ const UserHistory = () => {
                     </div>
                     <div className="text-right border-l border-gray-200 pl-4">
                         <p className="text-[9px] font-bold text-gray-400 uppercase">Total Pontos</p>
-                        <p className="text-sm font-black text-blue-600">{filteredRecords.reduce((acc, cur) => acc + cur.pontos, 0)}</p>
+                        <p className="text-sm font-black text-blue-600">{filteredRecords.filter(r => r.status !== 'EXPIRADO' && r.status !== 'REPROVADO').reduce((acc, cur) => acc + cur.pontos, 0)}</p>
                     </div>
                 </div>
             </div>

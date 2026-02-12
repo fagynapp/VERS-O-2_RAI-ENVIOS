@@ -15,11 +15,13 @@ const RegisterRAI = () => {
     obs: ''
   });
 
-  // Estado para controlar a validação de duplicidade
+  // Estados de Validação
   const [duplicateStatus, setDuplicateStatus] = useState<{
     isDuplicate: boolean;
     previousRecord?: UserRaiRecord;
   } | null>(null);
+
+  const [isExpired, setIsExpired] = useState(false);
 
   // Inicializa o select com o primeiro valor disponível se houver
   useEffect(() => {
@@ -49,6 +51,24 @@ const RegisterRAI = () => {
       } else {
         setDuplicateStatus(null); // Reseta se não tiver 8 dígitos
       }
+    }
+
+    // Verificação de Data Expirada em Tempo Real
+    if (name === 'dataOcorrencia') {
+        if (value) {
+            // Cria data localmente a partir da string YYYY-MM-DD para evitar problemas de fuso UTC
+            const [ano, mes, dia] = value.split('-').map(Number);
+            const dataOcorrencia = new Date(ano, mes - 1, dia); // Meia-noite local
+            const dataHoje = new Date();
+            dataHoje.setHours(0,0,0,0); // Meia-noite local de hoje
+            
+            const diffTime = dataHoje.getTime() - dataOcorrencia.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            setIsExpired(diffDays > 90);
+        } else {
+            setIsExpired(false);
+        }
     }
 
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -86,32 +106,56 @@ const RegisterRAI = () => {
       alert("Selecione a data da ocorrência.");
       return;
     }
+
+    // Recalcula expiração no submit para garantir (usa a mesma lógica do handleChange)
+    const [ano, mes, dia] = formData.dataOcorrencia.split('-').map(Number);
+    const dataOcorrencia = new Date(ano, mes - 1, dia);
+    const dataHoje = new Date();
+    dataHoje.setHours(0,0,0,0);
+    const diffTime = dataHoje.getTime() - dataOcorrencia.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const recordIsExpired = diffDays > 90;
     
     const selectedNaturezaObj = activeNaturezas.find(
         n => `${n.natureza} (${n.pontos} pts)` === formData.natureza
     );
     
-    const pontos = selectedNaturezaObj ? selectedNaturezaObj.pontos : 0;
+    const pontosCalculados = selectedNaturezaObj ? selectedNaturezaObj.pontos : 0;
     const naturezaNome = selectedNaturezaObj ? selectedNaturezaObj.natureza : formData.natureza;
 
-    // 1. Cria o novo registro de Histórico
-    const newRecord: UserRaiRecord = {
-      id: Date.now().toString(),
-      raiNumber: formData.raiNumber,
-      dataOcorrencia: formData.dataOcorrencia,
-      natureza: naturezaNome,
-      pontos: pontos,
-      status: 'PENDENTE',
-      dataRegistro: new Date().toISOString()
-    };
+    if (recordIsExpired) {
+        // --- FLUXO RAI EXPIRADO ---
+        alert("ATENÇÃO: RAI EXPIRADO!\n\nA data da ocorrência é superior a 90 dias. Não é possível computar a pontuação automaticamente.\n\nO registro será salvo no seu histórico, mas os pontos NÃO SERÃO CREDITADOS.\n\nEntre em contato com a ADM (Sessão de Liberações) para verificar a possibilidade de desbloqueio mediante justificativa.");
+        
+        const newRecord: UserRaiRecord = {
+            id: Date.now().toString(),
+            raiNumber: formData.raiNumber,
+            dataOcorrencia: formData.dataOcorrencia,
+            natureza: naturezaNome,
+            pontos: pontosCalculados, // Salva o valor potencial, mas não aplica
+            status: 'EXPIRADO', // Status específico
+            dataRegistro: new Date().toISOString()
+        };
 
-    // 2. Salva no contexto global
-    setUserRaiRecords(prev => [newRecord, ...prev]);
+        setUserRaiRecords(prev => [newRecord, ...prev]);
+        // NOTA: setUserPoints NÃO é chamado aqui
+    } else {
+        // --- FLUXO NORMAL ---
+        const newRecord: UserRaiRecord = {
+            id: Date.now().toString(),
+            raiNumber: formData.raiNumber,
+            dataOcorrencia: formData.dataOcorrencia,
+            natureza: naturezaNome,
+            pontos: pontosCalculados,
+            status: 'PENDENTE',
+            dataRegistro: new Date().toISOString()
+        };
 
-    // 3. Atualiza a pontuação global (saldo visível no header)
-    setUserPoints(prev => prev + pontos);
-
-    alert(`RAI ${formData.raiNumber} registrado com sucesso! +${pontos} pontos adicionados ao seu saldo.`);
+        setUserRaiRecords(prev => [newRecord, ...prev]);
+        setUserPoints(prev => prev + pontosCalculados);
+        
+        alert(`RAI ${formData.raiNumber} registrado com sucesso! +${pontosCalculados} pontos adicionados ao seu saldo.`);
+    }
     
     // Reset form e status
     setFormData({
@@ -121,9 +165,10 @@ const RegisterRAI = () => {
       obs: ''
     });
     setDuplicateStatus(null);
+    setIsExpired(false);
   };
 
-  // Helper para definir estilos do input baseados na validação
+  // Helper para definir estilos do input RAI
   const getInputStyles = () => {
     if (duplicateStatus?.isDuplicate) {
         return "border-red-500 focus:ring-red-500 bg-red-50 text-red-900";
@@ -208,25 +253,39 @@ const RegisterRAI = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Data da Ocorrência</label>
+                <label className={`text-sm font-bold ${isExpired ? 'text-red-600' : 'text-slate-700'}`}>
+                    Data da Ocorrência
+                </label>
                 <div className="relative group" onClick={handleIconClick}>
                   <input 
                     ref={dateInputRef}
                     name="dataOcorrencia"
                     value={formData.dataOcorrencia}
                     onChange={handleChange}
-                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm cursor-pointer" 
+                    className={`w-full pl-4 pr-12 py-3 border rounded-lg outline-none transition-all text-sm cursor-pointer
+                        ${isExpired 
+                            ? 'bg-red-50 border-red-500 text-red-700 focus:ring-2 focus:ring-red-500 placeholder-red-300' 
+                            : 'bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-600 focus:bg-white text-slate-900'
+                        }
+                    `} 
                     type="date"
-                    style={{ colorScheme: 'light' }}
+                    style={{ colorScheme: isExpired ? 'light' : 'light' }}
                   />
                   <div 
                     className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center p-1 pointer-events-none z-20"
                   >
-                    <span className="material-icons-round text-slate-400 text-2xl group-hover:text-blue-600 transition-colors">
-                      calendar_month
+                    <span className={`material-icons-round text-2xl transition-colors ${isExpired ? 'text-red-500' : 'text-slate-400 group-hover:text-blue-600'}`}>
+                      {isExpired ? 'event_busy' : 'calendar_month'}
                     </span>
                   </div>
                 </div>
+                {/* Alerta de Expiração */}
+                {isExpired && (
+                    <p className="text-xs font-black text-red-600 flex items-center gap-1 mt-1 animate-pulse">
+                        <span className="material-icons-round text-sm">warning</span>
+                        RAI EXPIRADO
+                    </p>
+                )}
               </div>
             </div>
 
@@ -268,13 +327,15 @@ const RegisterRAI = () => {
                 className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
                     duplicateStatus?.isDuplicate 
                     ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+                    : isExpired 
+                        ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-200' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
                 }`}
             >
               <span className="material-icons-round text-lg">
-                  {duplicateStatus?.isDuplicate ? 'block' : 'check'}
+                  {duplicateStatus?.isDuplicate ? 'block' : isExpired ? 'warning' : 'check'}
               </span>
-              Salvar Registro
+              {isExpired ? 'Salvar como Expirado' : 'Salvar Registro'}
             </button>
           </form>
         </div>
@@ -288,7 +349,7 @@ const RegisterRAI = () => {
         <ul className="space-y-2 text-xs text-blue-700 list-disc list-inside">
           <li><span className="font-bold">Limite de Uso:</span> Cada RAI pode ser compartilhado por até 3 policiais.</li>
           <li><span className="font-bold">Registro Único:</span> É proibido registrar o mesmo RAI mais de uma vez.</li>
-          <li><span className="font-bold">Prazo de 90 Dias:</span> RAIs com mais de 90 dias não computam pontos automaticamente.</li>
+          <li><span className="font-bold">Prazo de 90 Dias:</span> RAIs com mais de 90 dias não computam pontos automaticamente (Status: EXPIRADO).</li>
         </ul>
       </div>
     </div>

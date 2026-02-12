@@ -25,7 +25,7 @@ export interface UserRaiRecord {
   dataOcorrencia: string;
   natureza: string;
   pontos: number;
-  status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
+  status: 'PENDENTE' | 'APROVADO' | 'REPROVADO' | 'EXPIRADO';
   dataRegistro: string;
 }
 
