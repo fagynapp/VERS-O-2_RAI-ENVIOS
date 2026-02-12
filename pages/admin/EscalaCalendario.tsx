@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import { usePoliceData, Policial } from '../../contexts/PoliceContext';
-
-interface DispensaRegistro {
-  id: string;
-  policial: string;
-  matricula: string;
-  tipo: string;
-  obs: string;
-}
+import { usePoliceData, Policial, DispensaRegistro } from '../../contexts/PoliceContext';
 
 interface BatchEntry {
   equipe: string;
@@ -17,7 +9,16 @@ interface BatchEntry {
 }
 
 const AdminEscala = () => {
-  const { policiais, availableTeams } = usePoliceData(); // Consumindo do banco de dados global
+  // Consumindo estados globais de calendário para sincronização
+  const { 
+    policiais, 
+    availableTeams, 
+    calendarRegistros, 
+    setCalendarRegistros, 
+    calendarBloqueios, 
+    setCalendarBloqueios 
+  } = usePoliceData();
+  
   const [selectedTeam, setSelectedTeam] = useState('ALPHA');
   
   // Estado para Navegação do Calendário
@@ -44,12 +45,6 @@ const AdminEscala = () => {
     setSelectedDay(null);
   };
   
-  // Estado para armazenar as dispensas (Chave: "YYYY-MM-DD", Valor: array de dispensas)
-  const [registros, setRegistros] = useState<Record<string, DispensaRegistro[]>>({});
-  
-  // Estado para dias bloqueados (Chave: "YYYY-MM-DD", Valor: Motivo)
-  const [blockedDays, setBlockedDays] = useState<Record<string, string>>({});
-
   // Controle de Modais e Modos de Interação
   const [viewMode, setViewMode] = useState<'none' | 'options' | 'form' | 'block-form' | 'batch-register'>('none');
   const [interactionMode, setInteractionMode] = useState<'normal' | 'blocking'>('normal');
@@ -65,10 +60,11 @@ const AdminEscala = () => {
   const initialBatchEntries = Array(5).fill(null).map(() => ({ equipe: 'ALPHA', matricula: '', nome: '', data: '' }));
   const [batchEntries, setBatchEntries] = useState<BatchEntry[]>(initialBatchEntries);
 
-  // Form de Dispensa Individual
+  // Form de Dispensa Individual - Agora com EQUIPE
   const [formData, setFormData] = useState({
     policial: '',
     matricula: '',
+    equipe: '',
     tipo: 'CPC (Fila)',
     obs: ''
   });
@@ -76,9 +72,10 @@ const AdminEscala = () => {
   // Form de Bloqueio Individual
   const [blockReason, setBlockReason] = useState('');
   
-  // Estado para sugestões de busca
+  // Estado para sugestões de busca e lista de equipe
   const [suggestions, setSuggestions] = useState<Policial[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showTeamMembers, setShowTeamMembers] = useState(false);
 
   // Lógica de Escala (Baseada em Época para consistência entre meses)
   const getDayStatus = (day: number) => {
@@ -108,8 +105,8 @@ const AdminEscala = () => {
 
   const handleBlockAction = (day: number) => {
     const key = getDateKey(day);
-    if (blockedDays[key]) {
-      setBlockedDays(prev => {
+    if (calendarBloqueios[key]) {
+      setCalendarBloqueios(prev => {
         const newBlocked = { ...prev };
         delete newBlocked[key];
         return newBlocked;
@@ -126,7 +123,7 @@ const AdminEscala = () => {
     e.preventDefault();
     if (selectedDay !== null) {
       const key = getDateKey(selectedDay);
-      setBlockedDays(prev => ({
+      setCalendarBloqueios(prev => ({
         ...prev,
         [key]: blockReason.toUpperCase() || "BLOQUEIO ADM"
       }));
@@ -143,7 +140,7 @@ const AdminEscala = () => {
 
   const handleSaveBatchBlock = (e: React.FormEvent) => {
     e.preventDefault();
-    const newBlocked = { ...blockedDays };
+    const newBlocked = { ...calendarBloqueios };
     let processedCount = 0;
     const motivo = batchReason.toUpperCase() || "BLOQUEIO LOTE";
 
@@ -155,7 +152,7 @@ const AdminEscala = () => {
     });
 
     if (processedCount > 0) {
-      setBlockedDays(newBlocked);
+      setCalendarBloqueios(newBlocked);
       alert(`${processedCount} datas bloqueadas com sucesso!`);
       setShowBatchBlock(false);
       setBatchDates(['', '', '', '', '']);
@@ -201,7 +198,7 @@ const AdminEscala = () => {
 
   const handleSaveBatchRegisters = (e: React.FormEvent) => {
     e.preventDefault();
-    const novosRegistros = { ...registros };
+    const novosRegistros = { ...calendarRegistros };
     let count = 0;
 
     batchEntries.forEach(entry => {
@@ -213,7 +210,8 @@ const AdminEscala = () => {
             policial: entry.nome,
             matricula: entry.matricula,
             tipo: 'LOTE (Admin)',
-            obs: `Equipe: ${entry.equipe}`
+            obs: `Equipe: ${entry.equipe}`,
+            equipe: entry.equipe // IMPORTANTE: Salvando a equipe no registro
         };
 
         const registrosDoDia = novosRegistros[key] || [];
@@ -223,7 +221,7 @@ const AdminEscala = () => {
     });
 
     if (count > 0) {
-      setRegistros(novosRegistros);
+      setCalendarRegistros(novosRegistros);
       alert(`${count} dispensa(s) registrada(s) com sucesso!`);
       setBatchEntries(Array(5).fill(null).map(() => ({ equipe: 'ALPHA', matricula: '', nome: '', data: '' })));
       setViewMode('none');
@@ -234,9 +232,10 @@ const AdminEscala = () => {
 
   // Funções do Menu de Opções
   const handleOptionRegistrar = () => {
-    setFormData({ policial: '', matricula: '', tipo: 'CPC (Fila)', obs: '' });
+    setFormData({ policial: '', matricula: '', tipo: 'CPC (Fila)', obs: '', equipe: '' });
     setSuggestions([]);
     setShowSuggestions(false);
+    setShowTeamMembers(false);
     setViewMode('form');
   };
 
@@ -249,7 +248,7 @@ const AdminEscala = () => {
   const handleOptionCancelarDispensas = () => {
     if (selectedDay && window.confirm(`Deseja cancelar TODAS as dispensas do dia ${selectedDay}?`)) {
       const key = getDateKey(selectedDay);
-      setRegistros(prev => {
+      setCalendarRegistros(prev => {
         const novo = { ...prev };
         delete novo[key];
         return novo;
@@ -270,13 +269,15 @@ const AdminEscala = () => {
     setFormData(prev => ({ ...prev, policial: value }));
 
     if (value.length > 0) {
-      // Busca no Contexto Global
+      // Busca no Contexto Global FILTRANDO PELA EQUIPE SELECIONADA
       const filtered = policiais.filter(p => 
-        p.nome.toLowerCase().includes(value.toLowerCase()) || 
-        p.matricula.includes(value)
+        p.equipe === selectedTeam && // Filtro da equipe ativa
+        (p.nome.toLowerCase().includes(value.toLowerCase()) || 
+        p.matricula.includes(value))
       ).slice(0, 5); // Limita a 5 sugestões
       setSuggestions(filtered);
       setShowSuggestions(true);
+      setShowTeamMembers(false); // Esconde a lista completa se estiver buscando
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -288,21 +289,28 @@ const AdminEscala = () => {
       ...prev,
       policial: policial.nome,
       matricula: policial.matricula,
+      equipe: policial.equipe, // IMPORTANTE: Captura a equipe do policial
       obs: prev.obs ? `${prev.obs} (Equipe: ${policial.equipe})` : `Equipe: ${policial.equipe}`
     }));
     setShowSuggestions(false);
+    setShowTeamMembers(false);
   };
 
   const handleSaveDispensa = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedDay !== null) {
       const key = getDateKey(selectedDay);
+      
       const novoRegistro: DispensaRegistro = {
-        ...formData,
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        policial: formData.policial,
+        matricula: formData.matricula,
+        tipo: formData.tipo,
+        obs: formData.obs,
+        equipe: formData.equipe // IMPORTANTE: Salva a equipe
       };
 
-      setRegistros(prev => {
+      setCalendarRegistros(prev => {
         const registrosDoDia = prev[key] || [];
         return {
           ...prev,
@@ -316,29 +324,16 @@ const AdminEscala = () => {
 
   const handleRemoveDispensaIndividual = (e: React.MouseEvent, day: number, id: string) => {
     e.preventDefault();
-    e.nativeEvent.stopImmediatePropagation();
-    e.stopPropagation();
+    e.stopPropagation(); // Impede propagação para o clique do dia
     
     if (window.confirm('Tem certeza que deseja remover esta dispensa?')) {
       const key = getDateKey(day);
-      setRegistros(prev => {
+      setCalendarRegistros(prev => {
         const registrosAtuais = prev[key] || [];
         const novosRegistros = registrosAtuais.filter(registro => registro.id !== id);
         return { ...prev, [key]: novosRegistros };
       });
     }
-  };
-
-  // Funções da Toolbar
-  const toggleBlockingMode = () => {
-    setInteractionMode(prev => prev === 'blocking' ? 'normal' : 'blocking');
-    setViewMode('none');
-  };
-
-  const handleToolbarCancel = () => {
-    setInteractionMode('normal');
-    setViewMode('none');
-    setSelectedDay(null);
   };
 
   return (
@@ -347,8 +342,8 @@ const AdminEscala = () => {
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Efetivo no Mês', value: policiais.length.toString(), icon: 'groups', color: 'bg-blue-50 text-blue-500' },
-          { label: 'Folgas Registradas', value: Object.values(registros).flat().length.toString(), icon: 'calendar_today', color: 'bg-orange-50 text-orange-500' },
-          { label: 'Dias Bloqueados', value: Object.keys(blockedDays).length.toString(), icon: 'lock', color: 'bg-red-50 text-red-500' },
+          { label: 'Folgas Registradas', value: Object.values(calendarRegistros).flat().length.toString(), icon: 'calendar_today', color: 'bg-orange-50 text-orange-500' },
+          { label: 'Dias Bloqueados', value: Object.keys(calendarBloqueios).length.toString(), icon: 'lock', color: 'bg-red-50 text-red-500' },
           { label: 'Status Escala', value: 'ABERTA', icon: 'lock_open', color: 'bg-slate-50 text-slate-500', isText: true }
         ].map((item, idx) => (
           <div key={idx} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
@@ -398,9 +393,9 @@ const AdminEscala = () => {
              const dateKey = getDateKey(day);
              const status = getDayStatus(day);
              const isOrdinario = status === 'ORDINÁRIO';
-             const blockReason = blockedDays[dateKey];
+             const blockReason = calendarBloqueios[dateKey];
              const isBlocked = !!blockReason;
-             const dispensasDoDia = registros[dateKey] || [];
+             const dispensasDoDia = calendarRegistros[dateKey] || [];
              
              return (
                <div key={day} onClick={() => handleDayClick(day)} className={`min-h-[112px] p-2 relative flex flex-col justify-between transition-colors hover:bg-blue-50/50 cursor-pointer group ${isBlocked ? 'bg-slate-100' : isOrdinario ? 'bg-blue-50/30' : 'bg-white'}`}>
@@ -437,11 +432,12 @@ const AdminEscala = () => {
         </div>
       </div>
 
-      {/* Modal: Registro em Lote (Formulário) */}
+      {/* Modais (Batch Register, Batch Block, Options, Block Form, Dispensa Form) - Código mantido estruturalmente, apenas lógica interna atualizada via Context acima */}
       {viewMode === 'batch-register' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-blue-600 p-5 flex justify-between items-center text-white">
+             {/* Header */}
+             <div className="bg-blue-600 p-5 flex justify-between items-center text-white">
               <div className="flex items-center gap-3">
                 <span className="material-icons-round text-2xl">playlist_add</span>
                 <div>
@@ -451,97 +447,68 @@ const AdminEscala = () => {
               </div>
               <button onClick={() => setViewMode('none')} className="hover:bg-white/20 p-1 rounded transition-colors"><span className="material-icons-round">close</span></button>
             </div>
-
+            {/* Form */}
             <form onSubmit={handleSaveBatchRegisters} className="p-6">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200">
-                      <th className="pb-3 px-2 w-32">Equipe</th>
-                      <th className="pb-3 px-2 w-40">Matrícula (Busca)</th>
-                      <th className="pb-3 px-2">Policial (Auto)</th>
-                      <th className="pb-3 px-2 w-40">Data Dispensa</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {batchEntries.map((entry, index) => (
-                      <tr key={index}>
-                        <td className="py-2 px-2">
-                          <select 
-                            value={entry.equipe}
-                            onChange={(e) => handleBatchEntryChange(index, 'equipe', e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-2 text-xs font-bold outline-none focus:ring-1 focus:ring-blue-500 uppercase"
-                          >
-                            {availableTeams.map(team => (
-                                <option key={team} value={team}>{team}</option>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200">
+                                <th className="pb-3 px-2 w-32">Equipe</th>
+                                <th className="pb-3 px-2 w-40">Matrícula (Busca)</th>
+                                <th className="pb-3 px-2">Policial (Auto)</th>
+                                <th className="pb-3 px-2 w-40">Data Dispensa</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {batchEntries.map((entry, index) => (
+                                <tr key={index}>
+                                    <td className="py-2 px-2">
+                                        <select value={entry.equipe} onChange={(e) => handleBatchEntryChange(index, 'equipe', e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded px-2 py-2 text-xs font-bold outline-none uppercase">
+                                            {availableTeams.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                    </td>
+                                    <td className="py-2 px-2">
+                                        <input value={entry.matricula} onChange={(e) => handleBatchEntryChange(index, 'matricula', e.target.value)} className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 uppercase placeholder-slate-400" placeholder="00000" maxLength={5} />
+                                    </td>
+                                    <td className="py-2 px-2">
+                                        <input value={entry.nome} readOnly className="w-full bg-slate-100 border border-slate-200 rounded px-3 py-2 text-xs font-bold text-slate-600 outline-none uppercase" placeholder="..." />
+                                    </td>
+                                    <td className="py-2 px-2">
+                                        <input type="date" value={entry.data} onChange={(e) => handleBatchEntryChange(index, 'data', e.target.value)} className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </td>
+                                </tr>
                             ))}
-                          </select>
-                        </td>
-                        <td className="py-2 px-2">
-                          <input 
-                            value={entry.matricula}
-                            onChange={(e) => handleBatchEntryChange(index, 'matricula', e.target.value)}
-                            className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 uppercase placeholder-slate-400"
-                            placeholder="00000"
-                            maxLength={5}
-                          />
-                        </td>
-                        <td className="py-2 px-2">
-                          <input 
-                            value={entry.nome}
-                            readOnly
-                            className="w-full bg-slate-100 border border-slate-200 rounded px-3 py-2 text-xs font-bold text-slate-600 outline-none uppercase"
-                            placeholder="AGUARDANDO MATRÍCULA..."
-                          />
-                        </td>
-                        <td className="py-2 px-2">
-                          <input 
-                            type="date"
-                            value={entry.data}
-                            onChange={(e) => handleBatchEntryChange(index, 'data', e.target.value)}
-                            className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg text-xs text-blue-800 mt-4 flex gap-2 items-center">
-                <span className="material-icons-round text-lg">info</span>
-                <span>Digite os 5 números da matrícula para identificação automática usando o Banco de Dados.</span>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-6 border-t border-slate-100 mt-4">
-                <button type="button" onClick={() => setViewMode('none')} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-colors">Processar Lote</button>
-              </div>
+                        </tbody>
+                    </table>
+                </div>
+                <div className="flex gap-3 justify-end pt-6 border-t border-slate-100 mt-4">
+                    <button type="button" onClick={() => setViewMode('none')} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Cancelar</button>
+                    <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200">Processar Lote</button>
+                </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Outros Modais (Opções do dia, Bloqueio, Form Individual) mantidos */}
       {viewMode === 'options' && selectedDay !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setViewMode('none')}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden scale-100 animate-[fadeIn_0.2s_ease-out]" onClick={e => e.stopPropagation()}>
-            <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-[fadeIn_0.2s_ease-out]" onClick={e => e.stopPropagation()}>
+             <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-bold text-slate-800">Opções: Dia {selectedDay}</h3>
               <button onClick={() => setViewMode('none')} className="text-slate-400 hover:text-slate-600"><span className="material-icons-round">close</span></button>
             </div>
             <div className="p-4 space-y-3">
               <button onClick={handleOptionRegistrar} className="w-full flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors group">
-                <div className="bg-white p-2 rounded-md shadow-sm text-blue-600 group-hover:scale-110 transition-transform"><span className="material-icons-round">edit_calendar</span></div>
+                <div className="bg-white p-2 rounded-md shadow-sm text-blue-600"><span className="material-icons-round">edit_calendar</span></div>
                 <div className="text-left"><span className="block text-sm font-bold uppercase">Registrar</span><span className="text-[10px] opacity-70">Adicionar dispensa manualmente</span></div>
               </button>
-              <button onClick={handleOptionBloquear} className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors group ${blockedDays[getDateKey(selectedDay)] ? 'bg-green-50 hover:bg-green-100 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-700'}`}>
-                <div className={`bg-white p-2 rounded-md shadow-sm group-hover:scale-110 transition-transform ${blockedDays[getDateKey(selectedDay)] ? 'text-green-600' : 'text-red-600'}`}><span className="material-icons-round">{blockedDays[getDateKey(selectedDay)] ? 'lock_open' : 'lock'}</span></div>
-                <div className="text-left"><span className="block text-sm font-bold uppercase">{blockedDays[getDateKey(selectedDay)] ? 'Desbloquear Data' : 'Bloquear Data'}</span><span className="text-[10px] opacity-70">{blockedDays[getDateKey(selectedDay)] ? 'Permitir registros' : 'Impedir registros neste dia'}</span></div>
+              <button onClick={handleOptionBloquear} className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors group ${calendarBloqueios[getDateKey(selectedDay)] ? 'bg-green-50 hover:bg-green-100 text-green-700' : 'bg-red-50 hover:bg-red-100 text-red-700'}`}>
+                <div className={`bg-white p-2 rounded-md shadow-sm ${calendarBloqueios[getDateKey(selectedDay)] ? 'text-green-600' : 'text-red-600'}`}><span className="material-icons-round">{calendarBloqueios[getDateKey(selectedDay)] ? 'lock_open' : 'lock'}</span></div>
+                <div className="text-left"><span className="block text-sm font-bold uppercase">{calendarBloqueios[getDateKey(selectedDay)] ? 'Desbloquear Data' : 'Bloquear Data'}</span><span className="text-[10px] opacity-70">{calendarBloqueios[getDateKey(selectedDay)] ? 'Permitir registros' : 'Impedir registros neste dia'}</span></div>
               </button>
-              {(registros[getDateKey(selectedDay)] || []).length > 0 && (
+              {(calendarRegistros[getDateKey(selectedDay)] || []).length > 0 && (
                 <button onClick={handleOptionCancelarDispensas} className="w-full flex items-center gap-3 p-3 bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-lg transition-colors group border border-slate-100 hover:border-red-100">
-                  <div className="bg-white p-2 rounded-md shadow-sm text-slate-400 group-hover:text-red-500 group-hover:scale-110 transition-transform"><span className="material-icons-round">delete_sweep</span></div>
+                  <div className="bg-white p-2 rounded-md shadow-sm text-slate-400 group-hover:text-red-500"><span className="material-icons-round">delete_sweep</span></div>
                   <div className="text-left"><span className="block text-sm font-bold uppercase">Cancelar Dispensas</span><span className="text-[10px] opacity-70">Limpar todos os registros do dia</span></div>
                 </button>
               )}
@@ -554,25 +521,24 @@ const AdminEscala = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             <div className="bg-orange-600 p-5 flex justify-between items-center text-white">
-              <div className="flex items-center gap-3"><span className="material-icons-round text-2xl">date_range</span><div><h3 className="font-bold text-lg">Bloqueio em Lote</h3><p className="text-[10px] opacity-80 uppercase tracking-wider">Múltiplas datas</p></div></div>
-              <button onClick={() => setShowBatchBlock(false)} className="hover:bg-white/20 p-1 rounded transition-colors"><span className="material-icons-round">close</span></button>
+               <div className="flex items-center gap-3"><span className="material-icons-round text-2xl">date_range</span><div><h3 className="font-bold text-lg">Bloqueio em Lote</h3></div></div>
+               <button onClick={() => setShowBatchBlock(false)} className="hover:bg-white/20 p-1 rounded"><span className="material-icons-round">close</span></button>
             </div>
             <form onSubmit={handleSaveBatchBlock} className="p-6 space-y-4">
-              <div className="bg-orange-50 border border-orange-100 p-3 rounded-lg text-xs text-orange-800 mb-2"><strong>Instrução:</strong> Selecione até 5 datas para bloquear simultaneamente com o mesmo motivo.</div>
-              <div className="space-y-3">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase">Datas para Bloqueio</label>
-                {batchDates.map((date, index) => (
-                  <input key={index} type="date" value={date} onChange={(e) => handleBatchDateChange(index, e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm text-slate-700 outline-none focus:ring-1 focus:ring-orange-500" />
-                ))}
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Motivo (Aplicado a todas)</label>
-                <input value={batchReason} onChange={(e) => setBatchReason(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 uppercase" placeholder="EX: OPERAÇÃO ESPECIAL" required />
-              </div>
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
-                <button type="button" onClick={() => setShowBatchBlock(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-orange-600 hover:bg-orange-700 rounded-lg shadow-lg shadow-orange-200 transition-colors">Confirmar Bloqueios</button>
-              </div>
+               <div className="space-y-3">
+                 <label className="block text-[10px] font-bold text-slate-500 uppercase">Datas</label>
+                 {batchDates.map((date, i) => (
+                    <input key={i} type="date" value={date} onChange={(e) => handleBatchDateChange(i, e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-orange-500" />
+                 ))}
+               </div>
+               <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Motivo</label>
+                  <input value={batchReason} onChange={(e) => setBatchReason(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-orange-500 uppercase" placeholder="MOTIVO..." required />
+               </div>
+               <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
+                  <button type="button" onClick={() => setShowBatchBlock(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg">Cancelar</button>
+                  <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-orange-600 rounded-lg shadow-lg">Confirmar</button>
+               </div>
             </form>
           </div>
         </div>
@@ -582,19 +548,18 @@ const AdminEscala = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-[fadeIn_0.2s_ease-out]">
             <div className="bg-red-600 p-5 flex justify-between items-center text-white">
-              <div className="flex items-center gap-3"><span className="material-icons-round text-2xl">lock</span><div><h3 className="font-bold text-lg">Bloquear Data</h3><p className="text-[10px] opacity-80 uppercase tracking-wider">Dia {selectedDay} de {currentMonthStr}</p></div></div>
-              <button onClick={() => setViewMode('none')} className="hover:bg-white/20 p-1 rounded transition-colors"><span className="material-icons-round">close</span></button>
+                <div className="flex items-center gap-3"><span className="material-icons-round text-2xl">lock</span><div><h3 className="font-bold text-lg">Bloquear Data</h3><p className="text-[10px] opacity-80 uppercase">Dia {selectedDay}</p></div></div>
+                <button onClick={() => setViewMode('none')} className="hover:bg-white/20 p-1 rounded"><span className="material-icons-round">close</span></button>
             </div>
             <form onSubmit={handleSaveBlock} className="p-6 space-y-6">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Motivo do Bloqueio</label>
-                <input autoFocus value={blockReason} onChange={(e) => setBlockReason(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:ring-2 focus:ring-red-500 uppercase" placeholder="EX: JOGO, TREINAMENTO, FERIADO..." required />
-                <p className="text-[10px] text-slate-400 mt-2">Esta ação impedirá o registro de dispensas ordinárias para este dia.</p>
-              </div>
-              <div className="flex gap-3 justify-end pt-2">
-                <button type="button" onClick={() => setViewMode('none')} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-lg shadow-red-200 transition-colors">Confirmar Bloqueio</button>
-              </div>
+                <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Motivo</label>
+                    <input autoFocus value={blockReason} onChange={(e) => setBlockReason(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-red-500 uppercase" placeholder="MOTIVO DO BLOQUEIO..." required />
+                </div>
+                <div className="flex gap-3 justify-end pt-2">
+                    <button type="button" onClick={() => setViewMode('none')} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg">Cancelar</button>
+                    <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-red-600 rounded-lg shadow-lg">Confirmar</button>
+                </div>
             </form>
           </div>
         </div>
@@ -602,49 +567,95 @@ const AdminEscala = () => {
 
       {viewMode === 'form' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-visible">
-            <div className="bg-blue-600 p-5 flex justify-between items-center text-white rounded-t-xl">
-              <div className="flex items-center gap-3"><span className="material-icons-round text-2xl">edit_calendar</span><div><h3 className="font-bold text-lg">Registrar Dispensa Manual</h3><p className="text-[10px] opacity-80 uppercase tracking-wider">Dia {selectedDay} de {currentMonthStr}</p></div></div>
-              <button onClick={() => setViewMode('none')} className="hover:bg-white/20 p-1 rounded transition-colors"><span className="material-icons-round">close</span></button>
-            </div>
-            <form onSubmit={handleSaveDispensa} className="p-8 space-y-6">
-              <div className="relative">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Policial</label>
-                <input name="policial" value={formData.policial} onChange={handlePolicialSearch} onFocus={() => { if(formData.policial) setShowSuggestions(true); }} className="w-full bg-slate-900 text-white border-2 border-blue-500 rounded-lg px-4 py-3 text-sm font-bold tracking-wide outline-none focus:ring-4 focus:ring-blue-500/20 uppercase" placeholder="DIGITE NOME OU MATRÍCULA..." autoComplete="off" required />
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
-                    {suggestions.map((policial, idx) => (
-                      <button key={idx} type="button" onClick={() => selectPolicial(policial)} className="w-full text-left px-4 py-3 hover:bg-blue-50 flex justify-between items-center border-b border-slate-50 last:border-0">
-                        <span className="font-bold text-slate-800 text-xs">{policial.nome}</span><span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{policial.matricula}</span>
-                      </button>
-                    ))}
+           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-visible">
+              <div className="bg-blue-600 p-5 flex justify-between items-center text-white rounded-t-xl">
+                 <div className="flex items-center gap-3">
+                    <span className="material-icons-round text-2xl">edit_calendar</span>
+                    <div>
+                        <h3 className="font-bold text-lg">Registrar Dispensa</h3>
+                        <p className="text-[10px] opacity-80 uppercase tracking-wider">Equipe: {selectedTeam}</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setViewMode('none')} className="hover:bg-white/20 p-1 rounded"><span className="material-icons-round">close</span></button>
+              </div>
+              <form onSubmit={handleSaveDispensa} className="p-8 space-y-6">
+                  <div className="relative">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Policial</label>
+                      <div className="flex gap-2 relative">
+                          <input 
+                            name="policial" 
+                            value={formData.policial} 
+                            onChange={handlePolicialSearch} 
+                            onFocus={() => { if(formData.policial) setShowSuggestions(true); setShowTeamMembers(false); }} 
+                            className="w-full bg-slate-900 text-white border-2 border-blue-500 rounded-lg px-4 py-3 text-sm font-bold tracking-wide outline-none uppercase" 
+                            placeholder="NOME OU MATRÍCULA..." 
+                            autoComplete="off" 
+                            required 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => { setShowTeamMembers(!showTeamMembers); setShowSuggestions(false); }}
+                            className="bg-blue-100 text-blue-600 border-2 border-blue-200 hover:bg-blue-200 rounded-lg px-3 transition-colors flex items-center justify-center"
+                            title="Listar Policiais da Equipe"
+                          >
+                            <span className="material-icons-round">groups</span>
+                          </button>
+
+                          {/* Sugestões de Busca */}
+                          {showSuggestions && suggestions.length > 0 && (
+                              <div className="absolute top-full left-0 w-full z-20 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                  {suggestions.map((policial, idx) => (
+                                      <button key={idx} type="button" onClick={() => selectPolicial(policial)} className="w-full text-left px-4 py-3 hover:bg-blue-50 flex justify-between items-center border-b border-slate-50 last:border-0">
+                                          <span className="font-bold text-slate-800 text-xs">{policial.nome}</span><span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{policial.matricula}</span>
+                                      </button>
+                                  ))}
+                              </div>
+                          )}
+
+                          {/* Lista Completa da Equipe (Ao clicar no ícone) */}
+                          {showTeamMembers && (
+                              <div className="absolute top-full left-0 w-full z-20 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-[fadeIn_0.1s_ease-out]">
+                                  <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase sticky top-0 flex justify-between items-center">
+                                      <span>Membros da Equipe {selectedTeam}</span>
+                                      <button type="button" onClick={() => setShowTeamMembers(false)} className="text-slate-400 hover:text-slate-600"><span className="material-icons-round text-sm">close</span></button>
+                                  </div>
+                                  {policiais.filter(p => p.equipe === selectedTeam).map((policial, idx) => (
+                                      <button key={idx} type="button" onClick={() => selectPolicial(policial)} className="w-full text-left px-4 py-3 hover:bg-blue-50 flex justify-between items-center border-b border-slate-50 last:border-0">
+                                          <span className="font-bold text-slate-800 text-xs">{policial.nome}</span>
+                                          <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{policial.matricula}</span>
+                                      </button>
+                                  ))}
+                                  {policiais.filter(p => p.equipe === selectedTeam).length === 0 && (
+                                      <div className="p-4 text-center text-xs text-slate-400">Nenhum policial encontrado nesta equipe.</div>
+                                  )}
+                              </div>
+                          )}
+                      </div>
                   </div>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Matrícula</label>
-                  <input name="matricula" value={formData.matricula} onChange={handleInputChange} className="w-full bg-slate-300/50 border-0 rounded-lg px-4 py-3 text-sm font-bold text-slate-600 outline-none" placeholder="00000" readOnly />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Dispensa</label>
-                  <select name="tipo" value={formData.tipo} onChange={handleInputChange} className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none bg-white focus:border-blue-500 transition-colors">
-                    <option value="CPC (Fila)">CPC (Fila)</option>
-                    <option value="PROD">Produtividade</option>
-                    <option value="Banco de Horas">Banco de Horas</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações</label>
-                <textarea name="obs" value={formData.obs} onChange={handleInputChange} rows={3} className="w-full bg-slate-950 text-slate-300 border-0 rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-blue-500 outline-none resize-none placeholder-slate-600" placeholder="Justificativa ou detalhes adicionais..." />
-              </div>
-              <div className="pt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setViewMode('none')} className="px-6 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" className="px-8 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-colors">Salvar Registro</button>
-              </div>
-            </form>
-          </div>
+                  <div className="grid grid-cols-2 gap-6">
+                      <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Matrícula</label>
+                          <input name="matricula" value={formData.matricula} onChange={handleInputChange} className="w-full bg-slate-300/50 border-0 rounded-lg px-4 py-3 text-sm font-bold text-slate-600 outline-none" readOnly />
+                      </div>
+                      <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo</label>
+                          <select name="tipo" value={formData.tipo} onChange={handleInputChange} className="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none bg-white">
+                              <option value="CPC (Fila)">CPC (Fila)</option>
+                              <option value="PROD">Produtividade</option>
+                              <option value="Banco de Horas">Banco de Horas</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Observações</label>
+                      <textarea name="obs" value={formData.obs} onChange={handleInputChange} rows={3} className="w-full bg-slate-950 text-slate-300 border-0 rounded-lg px-4 py-3 text-sm outline-none resize-none" />
+                  </div>
+                  <div className="pt-4 flex gap-3 justify-end">
+                      <button type="button" onClick={() => setViewMode('none')} className="px-6 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Cancelar</button>
+                      <button type="submit" className="px-8 py-2.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg">Salvar</button>
+                  </div>
+              </form>
+           </div>
         </div>
       )}
     </div>

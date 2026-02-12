@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { usePoliceData } from '../../contexts/PoliceContext';
+import { usePoliceData, UserRaiRecord } from '../../contexts/PoliceContext';
 
 const RegisterRAI = () => {
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const { naturezas, setUserPoints } = usePoliceData();
+  const { naturezas, setUserPoints, setUserRaiRecords, userRaiRecords } = usePoliceData();
   
   // Filtra apenas naturezas ativas para exibição
   const activeNaturezas = naturezas.filter(n => n.ativo);
@@ -11,9 +11,15 @@ const RegisterRAI = () => {
   const [formData, setFormData] = useState({
     raiNumber: '',
     dataOcorrencia: '',
-    natureza: '', // Inicializa vazio para forçar seleção ou usa o primeiro item no useEffect
+    natureza: '', 
     obs: ''
   });
+
+  // Estado para controlar a validação de duplicidade
+  const [duplicateStatus, setDuplicateStatus] = useState<{
+    isDuplicate: boolean;
+    previousRecord?: UserRaiRecord;
+  } | null>(null);
 
   // Inicializa o select com o primeiro valor disponível se houver
   useEffect(() => {
@@ -31,20 +37,30 @@ const RegisterRAI = () => {
     // Restrição para apenas números e máximo de 8 dígitos no campo RAI
     if (name === 'raiNumber') {
       value = value.replace(/\D/g, '').slice(0, 8);
+      
+      // Lógica de verificação de duplicidade em tempo real
+      if (value.length === 8) {
+        const existingRecord = userRaiRecords.find(r => r.raiNumber === value);
+        if (existingRecord) {
+          setDuplicateStatus({ isDuplicate: true, previousRecord: existingRecord });
+        } else {
+          setDuplicateStatus({ isDuplicate: false });
+        }
+      } else {
+        setDuplicateStatus(null); // Reseta se não tiver 8 dígitos
+      }
     }
 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleDateClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleIconClick = () => {
     if (dateInputRef.current) {
+      // Tenta abrir o seletor nativo usando a API moderna
       if ('showPicker' in HTMLInputElement.prototype) {
         try {
           dateInputRef.current.showPicker();
         } catch (error) {
-          console.warn('showPicker error:', error);
           dateInputRef.current.focus();
         }
       } else {
@@ -55,6 +71,13 @@ const RegisterRAI = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação de duplicidade no envio
+    if (duplicateStatus?.isDuplicate) {
+        alert(`ERRO: Este RAI já foi registrado por você em ${new Date(duplicateStatus.previousRecord!.dataRegistro).toLocaleDateString('pt-BR')}.`);
+        return;
+    }
+
     if (formData.raiNumber.length !== 8) {
       alert("O número do RAI deve conter exatamente 8 dígitos.");
       return;
@@ -64,27 +87,57 @@ const RegisterRAI = () => {
       return;
     }
     
-    // Extrair os pontos da string da natureza selecionada
-    // Formato esperado: "Nome da Natureza (XX pts)"
     const selectedNaturezaObj = activeNaturezas.find(
         n => `${n.natureza} (${n.pontos} pts)` === formData.natureza
     );
     
     const pontos = selectedNaturezaObj ? selectedNaturezaObj.pontos : 0;
+    const naturezaNome = selectedNaturezaObj ? selectedNaturezaObj.natureza : formData.natureza;
 
-    // Atualiza a pontuação global
+    // 1. Cria o novo registro de Histórico
+    const newRecord: UserRaiRecord = {
+      id: Date.now().toString(),
+      raiNumber: formData.raiNumber,
+      dataOcorrencia: formData.dataOcorrencia,
+      natureza: naturezaNome,
+      pontos: pontos,
+      status: 'PENDENTE',
+      dataRegistro: new Date().toISOString()
+    };
+
+    // 2. Salva no contexto global
+    setUserRaiRecords(prev => [newRecord, ...prev]);
+
+    // 3. Atualiza a pontuação global (saldo visível no header)
     setUserPoints(prev => prev + pontos);
 
-    // Simulação de envio
-    alert(`RAI ${formData.raiNumber} registrado com sucesso! +${pontos} pontos adicionados.`);
+    alert(`RAI ${formData.raiNumber} registrado com sucesso! +${pontos} pontos adicionados ao seu saldo.`);
     
-    // Reset form
+    // Reset form e status
     setFormData({
       raiNumber: '',
       dataOcorrencia: '',
       natureza: activeNaturezas.length > 0 ? `${activeNaturezas[0].natureza} (${activeNaturezas[0].pontos} pts)` : '',
       obs: ''
     });
+    setDuplicateStatus(null);
+  };
+
+  // Helper para definir estilos do input baseados na validação
+  const getInputStyles = () => {
+    if (duplicateStatus?.isDuplicate) {
+        return "border-red-500 focus:ring-red-500 bg-red-50 text-red-900";
+    }
+    if (duplicateStatus?.isDuplicate === false) {
+        return "border-green-500 focus:ring-green-500 bg-green-50 text-green-900";
+    }
+    return "border-slate-200 focus:ring-blue-600 bg-slate-50";
+  };
+
+  // Helper para formatar data ISO
+  const formatDateTime = (isoStr: string) => {
+    if (!isoStr) return '';
+    return new Date(isoStr).toLocaleString('pt-BR');
   };
 
   return (
@@ -112,37 +165,51 @@ const RegisterRAI = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700">Número do RAI (8 dígitos)</label>
+                <label className={`text-sm font-bold ${duplicateStatus?.isDuplicate ? 'text-red-600' : 'text-slate-700'}`}>
+                    Número do RAI (8 dígitos)
+                </label>
                 <div className="relative">
-                  <span className="material-icons-round absolute left-3 top-3 text-slate-400 text-lg">search</span>
+                  <span className={`material-icons-round absolute left-3 top-3 text-lg ${duplicateStatus?.isDuplicate ? 'text-red-500' : duplicateStatus?.isDuplicate === false ? 'text-green-600' : 'text-slate-400'}`}>
+                      {duplicateStatus?.isDuplicate ? 'error' : duplicateStatus?.isDuplicate === false ? 'check_circle' : 'search'}
+                  </span>
                   <input 
                     name="raiNumber"
                     value={formData.raiNumber}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm" 
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg outline-none transition-all text-sm font-bold ${getInputStyles()}`} 
                     placeholder="00000000" 
                     type="text"
                     maxLength={8}
                     inputMode="numeric"
                   />
                 </div>
+                
+                {/* Alerta de Duplicidade */}
+                {duplicateStatus?.isDuplicate && (
+                    <div className="mt-2 p-3 bg-red-100 border border-red-200 rounded-lg flex items-start gap-2 animate-[fadeIn_0.2s_ease-out]">
+                        <span className="material-icons-round text-red-600 text-base mt-0.5">report_problem</span>
+                        <div>
+                            <p className="text-xs font-bold text-red-700 uppercase">RAI EM DUPLICIDADE!</p>
+                            <p className="text-xs text-red-600">
+                                Registrado em: <span className="font-bold">{formatDateTime(duplicateStatus.previousRecord!.dataRegistro)}</span>
+                            </p>
+                            <p className="text-xs text-red-600">
+                                Status: {duplicateStatus.previousRecord!.status}
+                            </p>
+                        </div>
+                    </div>
+                )}
+                {/* Feedback Positivo */}
+                {duplicateStatus?.isDuplicate === false && (
+                    <p className="text-xs font-bold text-green-600 flex items-center gap-1 mt-1 pl-1">
+                        <span className="material-icons-round text-sm">verified</span> RAI disponível para registro
+                    </p>
+                )}
               </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Data da Ocorrência</label>
-                <div className="relative group">
-                  <style>
-                    {`
-                      input[type="date"]::-webkit-calendar-picker-indicator {
-                        opacity: 0;
-                        width: 100%;
-                        height: 100%;
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        cursor: pointer;
-                      }
-                    `}
-                  </style>
+                <div className="relative group" onClick={handleIconClick}>
                   <input 
                     ref={dateInputRef}
                     name="dataOcorrencia"
@@ -151,13 +218,11 @@ const RegisterRAI = () => {
                     className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none transition-all text-sm cursor-pointer" 
                     type="date"
                     style={{ colorScheme: 'light' }}
-                    onClick={handleDateClick}
                   />
                   <div 
-                    onClick={handleDateClick}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center cursor-pointer p-1 rounded-full hover:bg-slate-200 transition-colors z-20"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center p-1 pointer-events-none z-20"
                   >
-                    <span className="material-icons-round text-slate-400 text-2xl hover:text-blue-600">
+                    <span className="material-icons-round text-slate-400 text-2xl group-hover:text-blue-600 transition-colors">
                       calendar_month
                     </span>
                   </div>
@@ -181,7 +246,7 @@ const RegisterRAI = () => {
                   ))}
                   {activeNaturezas.length === 0 && <option value="">Nenhuma natureza disponível</option>}
                 </select>
-                <span className="material-icons-round absolute right-3 top-3 text-slate-400">expand_more</span>
+                <span className="material-icons-round absolute right-3 top-3 text-slate-400 pointer-events-none">expand_more</span>
               </div>
             </div>
 
@@ -197,8 +262,18 @@ const RegisterRAI = () => {
               ></textarea>
             </div>
 
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2">
-              <span className="material-icons-round text-lg">check</span>
+            <button 
+                type="submit" 
+                disabled={!!duplicateStatus?.isDuplicate}
+                className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 ${
+                    duplicateStatus?.isDuplicate 
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+                }`}
+            >
+              <span className="material-icons-round text-lg">
+                  {duplicateStatus?.isDuplicate ? 'block' : 'check'}
+              </span>
               Salvar Registro
             </button>
           </form>
