@@ -16,10 +16,10 @@ const UserHistory = () => {
 
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'PENDENTE': return 'bg-orange-50 text-orange-600 border-orange-100';
+      case 'PENDENTE': return 'bg-blue-600 text-white border-blue-600'; // Estilo atualizado: Azul Intenso + Texto Branco
       case 'APROVADO': return 'bg-green-50 text-green-600 border-green-100';
       case 'REPROVADO': return 'bg-red-50 text-red-600 border-red-100';
-      case 'EXPIRADO': return 'bg-red-600 text-white border-red-600'; // Estilo atualizado: Vermelho Sólido + Texto Branco
+      case 'EXPIRADO': return 'bg-red-600 text-white border-red-600';
       default: return 'bg-gray-50 text-gray-600 border-gray-100';
     }
   };
