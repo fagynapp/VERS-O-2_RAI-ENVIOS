@@ -157,7 +157,34 @@ const UserCalendar = () => {
     }
 
     // --- CENÁRIO B: Solicitar Nova Dispensa ---
-    // Validação de Saldo Insuficiente
+    
+    // 1. Validação de LIMITE MENSAL (1 PTS / 1 CPC)
+    // Extrai o mês da data selecionada (YYYY-MM)
+    const targetMonth = selectedDateKey.substring(0, 7);
+    let countPTS = 0;
+    // let countCPC = 0; // Futuramente se o usuário puder marcar CPC
+
+    // Itera sobre todos os registros para contar as dispensas DESTE USUÁRIO neste MÊS
+    Object.entries(calendarRegistros).forEach(([dateKey, registros]) => {
+        if (dateKey.startsWith(targetMonth)) {
+            const userRecord = registros.find(r => r.matricula === currentUser.matricula);
+            if (userRecord) {
+                // Verifica a natureza (tipo) da dispensa
+                if (userRecord.tipo === 'PTS') countPTS++;
+                // if (userRecord.tipo === 'CPC') countCPC++;
+            }
+        }
+    });
+
+    // O botão padrão deste calendário cria dispensas tipo 'PTS'
+    const typeToRegister = 'PTS'; 
+
+    if (typeToRegister === 'PTS' && countPTS >= 1) {
+        alert("Limite mensal atingido para este tipo de dispensa.\n\nRegra: Máximo de 1 dispensa PTS (Pontos) por mês.");
+        return; // Bloqueia a ação
+    }
+
+    // 2. Validação de Saldo Insuficiente
     if (userPoints < custo) {
         alert(`SALDO INSUFICIENTE!\n\nEsta data (${dataFormatada}) requer ${custo} pontos.\nMotivo: ${tipoCusto}\n\nSeu saldo atual: ${userPoints} pontos.`);
         return;
@@ -380,6 +407,16 @@ const UserCalendar = () => {
                         <div>
                             <p className="text-[10px] font-bold text-purple-800 uppercase">Aniversariante</p>
                             <p className="text-[9px] text-purple-700">50% de desconto na pontuação da dispensa.</p>
+                        </div>
+                    </div>
+
+                    <div className="p-3 bg-orange-50 border border-orange-100 rounded-lg flex items-center gap-3 mt-1">
+                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                            <span className="material-icons-round text-sm">rule</span>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold text-orange-800 uppercase">Limite Mensal</p>
+                            <p className="text-[9px] text-orange-700">Máx: 1 PTS e 1 CPC por mês.</p>
                         </div>
                     </div>
                 </div>

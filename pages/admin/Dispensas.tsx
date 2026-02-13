@@ -24,6 +24,7 @@ const AdminDispensas = () => {
   // Estados da Fila CPC
   const [equipeFila, setEquipeFila] = useState('ALPHA');
   const [criterioFila, setCriterioFila] = useState('ALMANAQUE');
+  const [prazoFila, setPrazoFila] = useState(24); // Novo estado para o Prazo em horas
 
   // Estados de Configuração
   const [limiteCPC, setLimiteCPC] = useState(1);
@@ -51,6 +52,14 @@ const AdminDispensas = () => {
       case 'Bloqueado': return 'text-red-600 bg-red-50 border-red-100';
       default: return 'text-slate-500 bg-slate-100 border-slate-200';
     }
+  };
+
+  const handleIniciarFila = () => {
+      const confirmMessage = `CONFIRMAR ABERTURA DE FILA?\n\nEquipe: ${equipeFila}\nCritério: ${criterioFila}\nPrazo para Escolha: ${prazoFila} Horas\n\nO próximo policial da fila será notificado no Dashboard e terá até ${prazoFila}h para selecionar a data.`;
+      
+      if(window.confirm(confirmMessage)) {
+          alert(`Fila iniciada! O policial foi notificado e o cronômetro de ${prazoFila}h começou.`);
+      }
   };
 
   return (
@@ -204,41 +213,72 @@ const AdminDispensas = () => {
         {/* ABA: FILA CPC */}
         {activeTab === 'FILA' && (
             <div className="p-6 space-y-6">
-                {/* Controles da Fila */}
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-center gap-4">
-                    <div className="flex flex-col gap-1">
+                {/* Controles da Fila (LAYOUT ATUALIZADO: EQUIPE | CRITÉRIO | PRAZO | BOTÃO) */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap items-end gap-4">
+                    
+                    {/* 1. Equipe */}
+                    <div className="flex flex-col gap-1 w-full md:w-auto">
                         <label className="text-[10px] font-bold text-slate-400 uppercase">Equipe</label>
                         <select 
-                            className="text-sm font-bold text-slate-700 border border-slate-200 rounded-lg bg-white py-2 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="text-sm font-bold text-slate-700 border border-slate-200 rounded-lg bg-white h-[38px] pl-3 pr-8 focus:ring-2 focus:ring-blue-500 outline-none"
                             value={equipeFila}
                             onChange={(e) => setEquipeFila(e.target.value)}
                         >
+                            <option value="TODAS">TODAS AS EQUIPES</option>
                             <option value="ALPHA">EQUIPE: ALPHA</option>
                             <option value="BRAVO">EQUIPE: BRAVO</option>
                             <option value="CHARLIE">EQUIPE: CHARLIE</option>
                             <option value="DELTA">EQUIPE: DELTA</option>
                         </select>
                     </div>
-                    <div className="flex flex-col gap-1">
+
+                    {/* 2. Critério */}
+                    <div className="flex flex-col gap-1 w-full md:w-auto">
                         <label className="text-[10px] font-bold text-slate-400 uppercase">Critério</label>
-                        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1">
+                        <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 h-[38px]">
                             <button 
                                 onClick={() => setCriterioFila('PRODUTIVIDADE')}
-                                className={`px-3 py-1 rounded text-[11px] font-bold uppercase transition-colors ${criterioFila === 'PRODUTIVIDADE' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`px-3 h-full flex items-center rounded text-[10px] font-bold uppercase transition-colors ${criterioFila === 'PRODUTIVIDADE' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                             >
                                 Produtividade
                             </button>
                             <button 
                                 onClick={() => setCriterioFila('ALMANAQUE')}
-                                className={`px-3 py-1 rounded text-[11px] font-bold uppercase transition-colors ${criterioFila === 'ALMANAQUE' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                                className={`px-3 h-full flex items-center rounded text-[10px] font-bold uppercase transition-colors ${criterioFila === 'ALMANAQUE' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                             >
                                 Almanaque
                             </button>
                         </div>
                     </div>
-                    <div className="ml-auto">
-                        <button onClick={() => alert("Processamento da fila iniciado!")} className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase flex items-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95">
-                            <span className="material-icons-round text-lg">play_arrow</span> Iniciar Fila
+
+                    {/* 3. Prazo (NOVO) */}
+                    <div className="flex flex-col gap-1 w-full md:w-auto">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                            Prazo <span className="text-[9px] text-slate-300 font-normal">(Horas)</span>
+                        </label>
+                        <div className="relative">
+                            <select
+                                value={prazoFila}
+                                onChange={(e) => setPrazoFila(Number(e.target.value))}
+                                className="h-[38px] w-full md:w-32 bg-white border border-slate-200 rounded-lg pl-3 pr-8 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+                            >
+                                <option value={8}>08 Horas</option>
+                                <option value={12}>12 Horas</option>
+                                <option value={24}>24 Horas</option>
+                                <option value={48}>48 Horas</option>
+                            </select>
+                            <span className="material-icons-round absolute right-2 top-2 text-slate-400 pointer-events-none text-base">schedule</span>
+                        </div>
+                    </div>
+
+                    {/* 4. Botão Iniciar */}
+                    <div className="ml-auto w-full md:w-auto">
+                        <button 
+                            onClick={handleIniciarFila} 
+                            className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white h-[38px] px-6 rounded-lg text-xs font-bold uppercase flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95"
+                        >
+                            <span className="material-icons-round text-lg">play_arrow</span> 
+                            Iniciar Fila
                         </button>
                     </div>
                 </div>
@@ -262,7 +302,11 @@ const AdminDispensas = () => {
                     </div>
                     <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center min-w-[160px] z-10">
                         <p className="text-[10px] font-bold text-red-400 uppercase mb-1 tracking-wider">Expira em</p>
-                        <p className="text-3xl font-black text-red-600 font-mono tracking-tighter">08:45:12</p>
+                        <p className="text-3xl font-black text-red-600 font-mono tracking-tighter">
+                            {/* Mock Visual do Prazo */}
+                            {String(prazoFila).padStart(2, '0')}:00:00
+                        </p>
+                        <p className="text-[9px] text-red-300 font-bold mt-1">HORAS RESTANTES</p>
                     </div>
                 </div>
 
