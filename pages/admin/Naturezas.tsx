@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import { usePoliceData, NaturezaItem } from '../../contexts/PoliceContext';
 
 const AdminNatureza = () => {
   const { naturezas, setNaturezas } = usePoliceData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('TODAS'); // Estado para o filtro
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref para input de arquivo
 
   // Estados do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,14 +88,70 @@ const AdminNatureza = () => {
     setIsModalOpen(false);
   };
 
-  const filteredData = naturezas.filter(item => 
-    item.natureza.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.descricao.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // --- Lógica de Importação Excel ---
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        if (jsonData.length === 0) { alert("Arquivo vazio."); return; }
+
+        const novasNaturezas = jsonData.map((row: any) => {
+            // Normaliza chaves para minúsculas
+            const normalizedRow: any = {};
+            Object.keys(row).forEach(key => normalizedRow[key.trim().toLowerCase()] = row[key]);
+            
+            return {
+                id: Date.now() + Math.random(),
+                natureza: normalizedRow['natureza'] || normalizedRow['nome'] || 'Nova Natureza',
+                descricao: normalizedRow['descrição'] || normalizedRow['descricao'] || '',
+                pontos: Number(normalizedRow['pontos']) || 0,
+                nga: normalizedRow['nga'] || 'Portaria Nº 22/2024',
+                ativo: true
+            };
+        });
+
+        if (novasNaturezas.length > 0) {
+            setNaturezas(prev => [...prev, ...novasNaturezas]);
+            alert(`${novasNaturezas.length} naturezas importadas com sucesso!`);
+        } else {
+            alert("Nenhum dado válido encontrado.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Erro ao processar arquivo Excel.");
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // --- Filtragem ---
+  const filteredData = naturezas.filter(item => {
+    // Filtro de Texto
+    const matchesSearch = item.natureza.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.descricao.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro de Tipo (APF vs TCO)
+    let matchesType = true;
+    if (filterType === 'APF') {
+        matchesType = item.natureza.toUpperCase().includes('FLAGRANTE') || item.natureza.toUpperCase().includes('PRISÃO');
+    } else if (filterType === 'TCO') {
+        matchesType = item.natureza.toUpperCase().includes('TCO') || item.natureza.toUpperCase().includes('TERMO');
+    }
+
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="space-y-6">
-      {/* Título removido */}
       
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -145,7 +204,7 @@ const AdminNatureza = () => {
         </div>
       </div>
 
-      {/* Barra de Ferramentas (Padronizada com Auditoria) */}
+      {/* Barra de Ferramentas (Atualizada) */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between z-20 relative">
         <div className="relative w-full md:w-80">
             <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
@@ -165,14 +224,38 @@ const AdminNatureza = () => {
             )}
         </div>
         
-        {/* Botão de Ação Estilizado como Aba Ativa (Padrão Auditoria) */}
-        <div className="flex bg-slate-100 p-1 rounded-lg">
+        {/* Ações Direita: Filtro, Importar e Adicionar */}
+        <div className="flex items-center gap-2 w-full md:w-auto">
+            {/* Filtro de Tipo */}
+            <div className="relative">
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                >
+                  <option value="TODAS">Filtros</option>
+                  <option value="APF">APF (Flagrante)</option>
+                  <option value="TCO">TCO (Termo)</option>
+                </select>
+            </div>
+
+            {/* Importar Excel */}
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv, .xlsx, .xls" />
+            <button 
+                onClick={handleImportClick}
+                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors shadow-sm"
+                title="Importar Excel"
+            >
+                <span className="material-icons-round">upload_file</span>
+            </button>
+
+            {/* Novo (Botão Azul +) */}
             <button 
                 onClick={handleAddNew} 
-                className="px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm hover:bg-blue-700 transition-colors"
+                title="Nova Natureza"
             >
-                <span className="material-icons-round text-sm">add</span>
-                Nova Natureza
+                <span className="material-icons-round text-2xl">add</span>
             </button>
         </div>
       </div>

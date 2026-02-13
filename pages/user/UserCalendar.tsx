@@ -16,12 +16,29 @@ const UserCalendar = () => {
   // Estado para controlar a data SELECIONADA pelo clique
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
-  // Mock do usuário logado
+  // Mock do usuário logado (Adicionado Aniversário para a regra de negócio)
   const currentUser = {
     nome: 'SD LUCAS MIGUEL',
     matricula: '39874',
-    equipe: 'ALPHA'
+    equipe: 'ALPHA',
+    aniversario: '15/01' // Exemplo: 15 de Janeiro
   };
+
+  // Mock de Feriados 2026 (Formato YYYY-MM-DD)
+  const FERIADOS_2026 = [
+    '2026-01-01', // Confraternização Universal
+    '2026-02-17', // Carnaval
+    '2026-04-03', // Paixão de Cristo
+    '2026-04-21', // Tiradentes
+    '2026-05-01', // Dia do Trabalho
+    '2026-06-04', // Corpus Christi
+    '2026-09-07', // Independência
+    '2026-10-12', // N. Sra. Aparecida
+    '2026-10-24', // Aniversário de Goiânia (Exemplo regional)
+    '2026-11-02', // Finados
+    '2026-11-15', // Proclamação da República
+    '2026-12-25'  // Natal
+  ];
 
   // Dados da data atual
   const year = currentDate.getFullYear();
@@ -56,6 +73,34 @@ const UserCalendar = () => {
     return teamOnDuty === currentUser.equipe ? 'ORDINÁRIO' : 'FOLGA';
   };
 
+  // --- Função de Cálculo de Custo da Dispensa ---
+  const calculateDispensaCost = (dateKey: string) => {
+    const [ano, mes, dia] = dateKey.split('-').map(Number);
+    const dataObj = new Date(ano, mes - 1, dia);
+    const diaSemana = dataObj.getDay(); // 0 = Domingo, 6 = Sábado
+
+    let custo = 100; // Base: Seg a Qui
+    let tipoCusto = "Padrão";
+
+    // Regra 1: Fim de Semana (Sex, Sáb, Dom) ou Feriado = 140 pontos
+    const isFimDeSemana = diaSemana === 0 || diaSemana === 5 || diaSemana === 6;
+    const isFeriado = FERIADOS_2026.includes(dateKey);
+
+    if (isFimDeSemana || isFeriado) {
+        custo = 140;
+        tipoCusto = isFeriado ? "Feriado" : "Fim de Semana";
+    }
+
+    // Regra 2: Aniversário = 50% de desconto
+    const [niverDia, niverMes] = currentUser.aniversario.split('/').map(Number);
+    if (dia === niverDia && mes === niverMes) {
+        custo = custo * 0.5;
+        tipoCusto += " (Aniversário -50%)";
+    }
+
+    return { custo, tipoCusto };
+  };
+
   // --- 1. Ação de Clicar no Dia (Apenas Seleciona) ---
   const handleDaySelect = (day: number) => {
     const key = getDateKey(day);
@@ -87,10 +132,13 @@ const UserCalendar = () => {
     const dispensasDoDia = calendarRegistros[selectedDateKey] || [];
     const jaTemDispensa = dispensasDoDia.some(d => d.matricula === currentUser.matricula);
     const dataFormatada = selectedDateKey.split('-').reverse().join('/');
+    
+    // Calcula custo atual para a data selecionada
+    const { custo, tipoCusto } = calculateDispensaCost(selectedDateKey);
 
     // --- CENÁRIO A: Cancelar Dispensa Existente ---
     if (jaTemDispensa) {
-        if(window.confirm(`Deseja CANCELAR sua dispensa do dia ${dataFormatada}?\nOs pontos (100 pts) serão estornados.`)) {
+        if(window.confirm(`Deseja CANCELAR sua dispensa do dia ${dataFormatada}?\nOs pontos (${custo} pts) serão estornados.`)) {
             setCalendarRegistros(prev => {
                 const novosRegistros = (prev[selectedDateKey] || []).filter(d => d.matricula !== currentUser.matricula);
                 // Se array ficar vazio, deleta a chave
@@ -101,7 +149,7 @@ const UserCalendar = () => {
                 }
                 return { ...prev, [selectedDateKey]: novosRegistros };
             });
-            setUserPoints(prev => prev + 100);
+            setUserPoints(prev => prev + custo);
             alert("Dispensa cancelada com sucesso!");
             setSelectedDateKey(null); // Limpa seleção
         }
@@ -109,12 +157,13 @@ const UserCalendar = () => {
     }
 
     // --- CENÁRIO B: Solicitar Nova Dispensa ---
-    if (userPoints < 100) {
-        alert(`Saldo insuficiente (${userPoints} pts). Necessário 100 pontos.`);
+    // Validação de Saldo Insuficiente
+    if (userPoints < custo) {
+        alert(`SALDO INSUFICIENTE!\n\nEsta data (${dataFormatada}) requer ${custo} pontos.\nMotivo: ${tipoCusto}\n\nSeu saldo atual: ${userPoints} pontos.`);
         return;
     }
 
-    if (window.confirm(`CONFIRMAR DISPENSA?\n\nData: ${dataFormatada}\nCusto: 100 Pontos`)) {
+    if (window.confirm(`CONFIRMAR DISPENSA?\n\nData: ${dataFormatada}\nRegra: ${tipoCusto}\nCusto: ${custo} Pontos\n\nSaldo Final: ${userPoints - custo}`)) {
         const novaDispensa: DispensaRegistro = {
             id: `${Date.now()}-${currentUser.matricula}`,
             policial: currentUser.nome,
@@ -129,7 +178,7 @@ const UserCalendar = () => {
             [selectedDateKey]: [...(prev[selectedDateKey] || []), novaDispensa]
         }));
 
-        setUserPoints(prev => prev - 100);
+        setUserPoints(prev => prev - custo);
         alert("Dispensa registrada com sucesso!");
         setSelectedDateKey(null); // Limpa seleção
     }
@@ -147,6 +196,7 @@ const UserCalendar = () => {
   };
 
   const btnState = getButtonState();
+  const costInfo = selectedDateKey ? calculateDispensaCost(selectedDateKey) : null;
 
   const calendarDays = [];
   for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(null);
@@ -195,6 +245,7 @@ const UserCalendar = () => {
              const isOrdinario = status === 'ORDINÁRIO';
              const isBlocked = !!calendarBloqueios[dateKey];
              const isSelected = selectedDateKey === dateKey;
+             const isFeriado = FERIADOS_2026.includes(dateKey);
              
              const dispensasDoDia = calendarRegistros[dateKey] || [];
              
@@ -210,7 +261,10 @@ const UserCalendar = () => {
                  {isBlocked && <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#fee2e2_10px,#fee2e2_20px)] opacity-50 z-0" />}
                  
                  <div className="flex justify-between items-start z-10">
-                    <span className={`text-sm font-bold ${isBlocked ? 'text-red-400' : isOrdinario ? 'text-blue-700' : 'text-slate-400'}`}>{String(day).padStart(2, '0')}</span>
+                    <div className="flex items-center gap-1">
+                        <span className={`text-sm font-bold ${isBlocked ? 'text-red-400' : isOrdinario ? 'text-blue-700' : 'text-slate-400'}`}>{String(day).padStart(2, '0')}</span>
+                        {isFeriado && <span className="material-icons-round text-[10px] text-amber-500" title="Feriado">star</span>}
+                    </div>
                     {isBlocked && <span className="material-icons-round text-red-500 text-sm">lock</span>}
                  </div>
 
@@ -283,9 +337,21 @@ const UserCalendar = () => {
                     </div>
                 </div>
                 </button>
-                {selectedDateKey && (
-                    <div className="text-center mt-2 pb-1">
-                        <p className="text-[10px] text-slate-400 font-bold uppercase">Data Selecionada: <span className="text-blue-600">{selectedDateKey.split('-').reverse().join('/')}</span></p>
+                {selectedDateKey && costInfo && (
+                    <div className="text-center mt-2 pb-1 border-t border-slate-100 pt-2">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">
+                            Data: <span className="text-slate-700">{selectedDateKey.split('-').reverse().join('/')}</span>
+                        </p>
+                        <div className="inline-flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">Custo:</span>
+                            <span className={`text-xs font-black ${userPoints < costInfo.custo ? 'text-red-500' : 'text-blue-600'}`}>
+                                {costInfo.custo} pts
+                            </span>
+                        </div>
+                        {userPoints < costInfo.custo && (
+                            <p className="text-[9px] font-bold text-red-500 mt-1 animate-pulse">SALDO INSUFICIENTE</p>
+                        )}
+                        <p className="text-[9px] text-slate-400 mt-1 italic">{costInfo.tipoCusto}</p>
                     </div>
                 )}
             </div>
@@ -294,26 +360,26 @@ const UserCalendar = () => {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex-1">
                 <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
                     <span className="material-icons-round text-blue-600">info</span>
-                    <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest">Informações</h4>
+                    <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest">Regras de Pontuação</h4>
                 </div>
                 
-                <div className="space-y-4">
-                    <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                        <p className="text-[10px] font-bold text-blue-800 uppercase mb-1">Passo a Passo</p>
-                        <ol className="text-[10px] text-blue-700 leading-relaxed list-decimal list-inside space-y-1">
-                            <li>Clique em um dia <span className="font-bold">ORDINÁRIO (Azul)</span>.</li>
-                            <li>Verifique a data selecionada no painel.</li>
-                            <li>Clique no botão <span className="font-bold">SOLICITAR DISPENSA</span>.</li>
-                        </ol>
+                <div className="space-y-3">
+                    <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-slate-600 uppercase">Seg a Qui</span>
+                        <span className="text-xs font-black text-blue-600">100 pts</span>
                     </div>
-
-                    <div className="p-3 bg-orange-50 border border-orange-100 rounded-lg flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
-                            <span className="material-icons-round text-sm">check_circle</span>
+                    <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-slate-600 uppercase">Sex a Dom / Feriados</span>
+                        <span className="text-xs font-black text-blue-600">140 pts</span>
+                    </div>
+                    
+                    <div className="p-3 bg-purple-50 border border-purple-100 rounded-lg flex items-center gap-3 mt-2">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                            <span className="material-icons-round text-sm">cake</span>
                         </div>
                         <div>
-                            <p className="text-[10px] font-bold text-orange-800 uppercase">Confirmado</p>
-                            <p className="text-[9px] text-orange-700">Dispensas de Produtividade serão marcadas com <span className="font-bold">PTS</span>.</p>
+                            <p className="text-[10px] font-bold text-purple-800 uppercase">Aniversariante</p>
+                            <p className="text-[9px] text-purple-700">50% de desconto na pontuação da dispensa.</p>
                         </div>
                     </div>
                 </div>

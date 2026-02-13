@@ -27,6 +27,7 @@ export interface UserRaiRecord {
   pontos: number;
   status: 'PENDENTE' | 'APROVADO' | 'REPROVADO' | 'EXPIRADO';
   dataRegistro: string;
+  obs?: string; // Campo adicionado para observações
 }
 
 // Interfaces para o Calendário

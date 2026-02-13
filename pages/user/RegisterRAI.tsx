@@ -134,7 +134,8 @@ const RegisterRAI = () => {
             natureza: naturezaNome,
             pontos: pontosCalculados, // Salva o valor potencial, mas não aplica
             status: 'EXPIRADO', // Status específico
-            dataRegistro: new Date().toISOString()
+            dataRegistro: new Date().toISOString(),
+            obs: formData.obs // Adicionado observação
         };
 
         setUserRaiRecords(prev => [newRecord, ...prev]);
@@ -148,7 +149,8 @@ const RegisterRAI = () => {
             natureza: naturezaNome,
             pontos: pontosCalculados,
             status: 'PENDENTE',
-            dataRegistro: new Date().toISOString()
+            dataRegistro: new Date().toISOString(),
+            obs: formData.obs // Adicionado observação
         };
 
         setUserRaiRecords(prev => [newRecord, ...prev]);
@@ -310,7 +312,7 @@ const RegisterRAI = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Observações (Opcional)</label>
+              <label className="text-sm font-bold text-slate-700">Anotações (Opcional)</label>
               <textarea 
                 name="obs"
                 value={formData.obs}

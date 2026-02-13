@@ -3,20 +3,22 @@ import { usePoliceData, UserRaiRecord } from '../../contexts/PoliceContext';
 
 const UserHistory = () => {
   const [activeFilter, setActiveFilter] = useState('TODOS');
+  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null); // Estado para controlar linha expandida
   const { userRaiRecords } = usePoliceData();
 
   // Lógica de Filtragem
   const filteredRecords = userRaiRecords.filter(record => {
     if (activeFilter === 'TODOS') return true;
-    // Agrupa EXPIRADO junto com REPROVADO se desejar, ou mantém separado. 
-    // Aqui assumiremos que o filtro 'REPROVADO' pode ver 'EXPIRADO' ou criar um novo filtro.
-    // Para simplificar, se não houver filtro explicito, mostra apenas o exato.
     return record.status === activeFilter;
   });
 
+  const toggleExpand = (id: string) => {
+    setExpandedRecordId(prev => prev === id ? null : id);
+  };
+
   const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'PENDENTE': return 'bg-blue-600 text-white border-blue-600'; // Estilo atualizado: Azul Intenso + Texto Branco
+      case 'PENDENTE': return 'bg-blue-600 text-white border-blue-600'; 
       case 'APROVADO': return 'bg-green-50 text-green-600 border-green-100';
       case 'REPROVADO': return 'bg-red-50 text-red-600 border-red-100';
       case 'EXPIRADO': return 'bg-red-600 text-white border-red-600';
@@ -89,31 +91,58 @@ const UserHistory = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                         {filteredRecords.map((record) => (
-                            <tr key={record.id} className="hover:bg-blue-50/30 transition-colors group">
-                                <td className="px-6 py-4 font-black text-gray-700 font-mono tracking-tighter">
-                                    {record.raiNumber}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <p className="font-bold text-gray-800 text-xs uppercase">{record.natureza}</p>
-                                    <p className="text-[9px] text-gray-400 font-medium">BPM Terminal / GO</p>
-                                </td>
-                                <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500">
-                                    {formatDate(record.dataOcorrencia)}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <span className={`font-black px-2 py-1 rounded text-[11px] border ${record.status === 'EXPIRADO' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
-                                        {record.status === 'EXPIRADO' ? '+0' : `+${record.pontos}`} <span className="text-[9px] opacity-70">PTS</span>
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyle(record.status)}`}>
-                                        {record.status === 'PENDENTE' ? 'Análise' : record.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right text-[10px] text-gray-400 font-medium">
-                                    {formatDateTime(record.dataRegistro)}
-                                </td>
-                            </tr>
+                            <React.Fragment key={record.id}>
+                                <tr 
+                                    onClick={() => toggleExpand(record.id)}
+                                    className={`cursor-pointer transition-colors group ${
+                                        expandedRecordId === record.id ? 'bg-blue-50/50' : 'hover:bg-blue-50/30'
+                                    }`}
+                                >
+                                    <td className="px-6 py-4 font-black text-gray-700 font-mono tracking-tighter flex items-center gap-2">
+                                        <span className={`material-icons-round text-lg transition-transform duration-200 text-gray-400 ${expandedRecordId === record.id ? 'rotate-180 text-blue-600' : ''}`}>
+                                            expand_more
+                                        </span>
+                                        {record.raiNumber}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <p className="font-bold text-gray-800 text-xs uppercase">{record.natureza}</p>
+                                        <p className="text-[9px] text-gray-400 font-medium">BPM Terminal / GO</p>
+                                    </td>
+                                    <td className="px-6 py-4 text-center text-xs font-semibold text-gray-500">
+                                        {formatDate(record.dataOcorrencia)}
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`font-black px-2 py-1 rounded text-[11px] border ${record.status === 'EXPIRADO' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                                            {record.status === 'EXPIRADO' ? '+0' : `+${record.pontos}`} <span className="text-[9px] opacity-70">PTS</span>
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase border ${getStatusStyle(record.status)}`}>
+                                            {record.status === 'PENDENTE' ? 'Análise' : record.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-[10px] text-gray-400 font-medium">
+                                        {formatDateTime(record.dataRegistro)}
+                                    </td>
+                                </tr>
+                                
+                                {/* Linha Expandida (Accordion) */}
+                                {expandedRecordId === record.id && (
+                                    <tr className="bg-blue-50/20 border-b border-blue-50 animate-[fadeIn_0.2s_ease-out]">
+                                        <td colSpan={6} className="px-6 py-0">
+                                            <div className="py-4 pl-8 border-l-2 border-blue-200 my-2 ml-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="material-icons-round text-blue-500 text-sm">sticky_note_2</span>
+                                                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Observações do Policial</span>
+                                                </div>
+                                                <p className="text-xs text-gray-600 leading-relaxed italic">
+                                                    {record.obs ? `"${record.obs}"` : <span className="text-gray-400 not-italic">Nenhuma observação registrada para esta ocorrência.</span>}
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>
