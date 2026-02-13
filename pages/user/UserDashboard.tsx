@@ -111,7 +111,7 @@ const UserDashboard = () => {
                     </p>
                 </div>
 
-                <div className="relative z-10 flex flex-col md:flex-row items-end justify-between gap-4 pt-6">
+                <div className="relative z-10 flex flex-col md:flex-row items-end justify-between gap-4 pt-5">
                     <div className="flex-1 w-full">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-white/10">Atenção Necessária</span>
