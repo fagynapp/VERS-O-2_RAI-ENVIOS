@@ -40,6 +40,15 @@ export interface DispensaRegistro {
   equipe?: string; // Adicionado para vincular dispensa à equipe
 }
 
+// Interface para Item da Fila CPC
+export interface CpcQueueItem {
+  posicao: number;
+  matricula: string;
+  nome: string;
+  status: 'VEZ DE ESCOLHER' | 'AGUARDANDO';
+  expiraEm?: string;
+}
+
 interface PoliceContextData {
   policiais: Policial[];
   setPoliciais: React.Dispatch<React.SetStateAction<Policial[]>>;
@@ -52,11 +61,15 @@ interface PoliceContextData {
   userRaiRecords: UserRaiRecord[];
   setUserRaiRecords: React.Dispatch<React.SetStateAction<UserRaiRecord[]>>;
   
-  // Novos Estados Globais de Calendário (Sincronização Admin <-> User)
+  // Estados Globais de Calendário (Sincronização Admin <-> User)
   calendarRegistros: Record<string, DispensaRegistro[]>;
   setCalendarRegistros: React.Dispatch<React.SetStateAction<Record<string, DispensaRegistro[]>>>;
   calendarBloqueios: Record<string, string>;
   setCalendarBloqueios: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+
+  // Estado Global da Fila CPC (Notificação)
+  cpcQueue: CpcQueueItem[];
+  setCpcQueue: React.Dispatch<React.SetStateAction<CpcQueueItem[]>>;
 
   // Logotipo Global para Relatórios
   reportLogo: string | null;
@@ -211,6 +224,9 @@ export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
   const [calendarRegistros, setCalendarRegistros] = useState<Record<string, DispensaRegistro[]>>({});
   const [calendarBloqueios, setCalendarBloqueios] = useState<Record<string, string>>({});
 
+  // Estado Global da Fila CPC (NOVO)
+  const [cpcQueue, setCpcQueue] = useState<CpcQueueItem[]>([]);
+
   // Estado Global do Logotipo com Persistência
   const [reportLogo, setReportLogo] = useState<string | null>(() => {
     return localStorage.getItem('global_report_logo');
@@ -241,6 +257,8 @@ export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
       setCalendarRegistros,
       calendarBloqueios,
       setCalendarBloqueios,
+      cpcQueue,
+      setCpcQueue,
       reportLogo,
       setReportLogo
     }}>

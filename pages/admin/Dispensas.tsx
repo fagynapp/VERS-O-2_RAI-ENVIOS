@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePoliceData } from '../../contexts/PoliceContext';
 
 // --- Interfaces Mock ---
 interface DispensaRegistro {
@@ -18,6 +19,7 @@ const MOCK_REGISTROS: DispensaRegistro[] = [
 ];
 
 const AdminDispensas = () => {
+  const { setCpcQueue } = usePoliceData(); // Usando o Contexto
   const [activeTab, setActiveTab] = useState<'GERAL' | 'FILA' | 'CONFIG'>('GERAL');
   const [search, setSearch] = useState('');
 
@@ -58,7 +60,18 @@ const AdminDispensas = () => {
       const confirmMessage = `CONFIRMAR ABERTURA DE FILA?\n\nEquipe: ${equipeFila}\nCritério: ${criterioFila}\nPrazo para Escolha: ${prazoFila} Horas\n\nO próximo policial da fila será notificado no Dashboard e terá até ${prazoFila}h para selecionar a data.`;
       
       if(window.confirm(confirmMessage)) {
-          alert(`Fila iniciada! O policial foi notificado e o cronômetro de ${prazoFila}h começou.`);
+          // Simula a criação de uma fila com 3 pessoas, incluindo o usuário mockado (SD Lucas Miguel) para teste
+          const novaFila = [
+              { posicao: 1, nome: 'SUB-TEN MARCELO ROCHA', matricula: '33000', status: 'VEZ DE ESCOLHER', expiraEm: `${prazoFila}h` },
+              { posicao: 2, nome: 'SD LUCAS MIGUEL', matricula: '39874', status: 'AGUARDANDO' }, // Usuário do Dashboard
+              { posicao: 3, nome: 'CB PASSOS', matricula: '38183', status: 'AGUARDANDO' }
+          ];
+          
+          // Atualiza o contexto global
+          // @ts-ignore
+          setCpcQueue(novaFila);
+          
+          alert(`Fila iniciada! 3 Policiais notificados no painel.`);
       }
   };
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { usePoliceData } from '../../contexts/PoliceContext';
 
 const StatCard = ({ icon, label, value, sub, color }: any) => (
@@ -17,7 +17,15 @@ const StatCard = ({ icon, label, value, sub, color }: any) => (
 );
 
 const UserDashboard = () => {
-  const { userPoints, userRaiRecords } = usePoliceData();
+  const { userPoints, userRaiRecords, cpcQueue } = usePoliceData();
+
+  // Mock do Usuário Atual (Em produção viria do AuthContext)
+  const currentUser = {
+    nome: 'SD LUCAS MIGUEL',
+    matricula: '39874', // Matrícula que será usada para verificar a fila
+    aniversario: '24/01', // Alterar esta data para testar o card de aniversário
+    primeiroNome: 'Lucas Miguel'
+  };
 
   // Cálculos de resumo
   const pendingCount = userRaiRecords.filter(r => r.status === 'PENDENTE').length;
@@ -26,6 +34,59 @@ const UserDashboard = () => {
   // Pegar as 3 atividades mais recentes
   const recentActivities = userRaiRecords.slice(0, 3);
 
+  // --- LÓGICA DE NOTIFICAÇÕES (Prioridade) ---
+  const notifications = useMemo(() => {
+    const alerts = [];
+    const today = new Date();
+    const currentDayMonth = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+    // 1. Verificação de Fila CPC (Prioridade Máxima)
+    // Verifica se o usuário está na lista da fila
+    const userInQueue = cpcQueue.find(item => item.matricula === currentUser.matricula);
+    if (userInQueue) {
+       alerts.push({
+         type: 'QUEUE',
+         priority: 1,
+         data: userInQueue,
+         queueList: cpcQueue.slice(0, 3) // Pega os top 3 da fila
+       });
+    }
+
+    // 2. Aniversário
+    if (currentUser.aniversario === currentDayMonth) {
+        alerts.push({
+            type: 'BIRTHDAY',
+            priority: 2,
+            message: `Parabéns, ${currentUser.nome}! O BPM Terminal deseja muitas felicidades.`
+        });
+    }
+
+    // 3. Alerta de Vencimento de RAIs (RAIs entre 85 e 90 dias)
+    const expiringRais = userRaiRecords.filter(r => {
+        if (r.status === 'EXPIRADO') return false;
+        const [ano, mes, dia] = r.dataOcorrencia.split('-').map(Number);
+        const dataRai = new Date(ano, mes - 1, dia);
+        const diffTime = today.getTime() - dataRai.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays >= 85 && diffDays <= 90;
+    });
+
+    if (expiringRais.length > 0) {
+        alerts.push({
+            type: 'EXPIRING',
+            priority: 3,
+            count: expiringRais.length,
+            message: `Você possui ${expiringRais.length} RAIs prestes a expirar (85+ dias).`
+        });
+    }
+
+    // Ordena por prioridade (menor número = maior prioridade)
+    return alerts.sort((a, b) => a.priority - b.priority);
+  }, [cpcQueue, userRaiRecords]);
+
+  // Pega a notificação mais importante para definir o estilo do banner
+  const activeNotification = notifications.length > 0 ? notifications[0] : null;
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
     const parts = dateStr.split('-');
@@ -33,19 +94,115 @@ const UserDashboard = () => {
     return dateStr;
   };
 
+  // Renderização condicional do Banner
+  const renderBanner = () => {
+      // Caso 1: Fila CPC Ativa para o usuário
+      if (activeNotification?.type === 'QUEUE') {
+          const pos = activeNotification.data.posicao;
+          const isFirst = pos === 1;
+          
+          return (
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Atenção Necessária</span>
+                            <span className="text-orange-100 text-xs flex items-center gap-1"><span className="material-icons-round text-sm">timer</span> Expira em breve</span>
+                        </div>
+                        <h1 className="text-3xl font-black mb-1 leading-tight">
+                            {isFirst ? 'É SUA VEZ DE ESCOLHER!' : `VOCÊ É O ${pos}º DA FILA!`}
+                        </h1>
+                        <p className="text-orange-100 text-sm opacity-90 max-w-lg">
+                            {isFirst 
+                                ? "A fila CPC chegou em você. Acesse o menu 'Calendário' agora para garantir sua data." 
+                                : "Fique atento! A fila está andando e sua vez de escolher a dispensa está próxima."}
+                        </p>
+                    </div>
+
+                    {/* Lista dos Top 3 da Fila */}
+                    <div className="bg-white/10 rounded-xl p-3 border border-white/20 w-full md:w-64 backdrop-blur-sm">
+                        <p className="text-[10px] font-bold text-orange-100 uppercase mb-2 border-b border-white/10 pb-1">Status da Fila</p>
+                        <div className="space-y-2">
+                            {activeNotification.queueList.map((item: any) => (
+                                <div key={item.matricula} className={`flex items-center justify-between text-xs ${item.matricula === currentUser.matricula ? 'font-black text-white bg-white/20 rounded px-2 py-1 -mx-2' : 'text-orange-50 font-medium'}`}>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-4 h-4 rounded-full bg-white text-orange-600 flex items-center justify-center text-[9px] font-bold">{item.posicao}</span>
+                                        <span className="truncate max-w-[120px] uppercase">{item.nome.split(' ').slice(0,2).join(' ')}</span>
+                                    </div>
+                                    {item.posicao === 1 && <span className="animate-pulse w-2 h-2 bg-green-400 rounded-full"></span>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <span className="material-icons-round absolute -right-4 -bottom-8 text-[180px] opacity-10">format_list_numbered</span>
+            </div>
+          );
+      }
+
+      // Caso 2: Aniversário
+      if (activeNotification?.type === 'BIRTHDAY') {
+          return (
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
+                <div className="relative z-10 flex items-center gap-6">
+                    <div className="hidden md:flex w-20 h-20 bg-white/20 rounded-full items-center justify-center backdrop-blur-sm shrink-0">
+                        <span className="material-icons-round text-5xl">cake</span>
+                    </div>
+                    <div>
+                        <h1 className="text-3xl font-black mb-2">Feliz Aniversário, Guerreiro!</h1>
+                        <p className="text-purple-100 text-sm opacity-90 max-w-xl leading-relaxed">
+                            O Batalhão agradece por mais um ano de vida e dedicação. Que seu novo ciclo seja repleto de conquistas e segurança. Aproveite o seu dia!
+                        </p>
+                    </div>
+                </div>
+                {/* Confetes Decorativos (CSS Mock) */}
+                <span className="material-icons-round absolute top-4 right-10 text-4xl opacity-20 rotate-12">celebration</span>
+                <span className="material-icons-round absolute bottom-4 left-1/3 text-6xl opacity-10 -rotate-12">local_bar</span>
+                <span className="material-icons-round absolute -right-4 -bottom-8 text-[180px] opacity-10">card_giftcard</span>
+            </div>
+          );
+      }
+
+      // Caso 3: Alerta de Vencimento
+      if (activeNotification?.type === 'EXPIRING') {
+          return (
+            <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2 text-red-200">
+                        <span className="bg-red-800/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-500">Ação Necessária</span>
+                    </div>
+                    <h1 className="text-2xl font-bold mb-1">Atenção aos Prazos!</h1>
+                    <p className="text-red-100 text-sm opacity-90">
+                        {activeNotification.message} Registre ou justifique-os antes que completem 90 dias para não perder a pontuação.
+                    </p>
+                </div>
+                <span className="material-icons-round absolute -right-4 -bottom-8 text-[180px] opacity-10">history_toggle_off</span>
+            </div>
+          );
+      }
+
+      // Caso 4: Padrão (Sem notificações críticas)
+      return (
+        <div className="bg-blue-600 rounded-xl p-8 text-white relative overflow-hidden shadow-lg">
+            <div className="relative z-10">
+            <h1 className="text-2xl font-bold mb-2">Olá, {currentUser.primeiroNome}!</h1>
+            <div className="flex items-center gap-2 text-blue-100 text-sm">
+                <span className="material-icons-round text-lg">schedule</span>
+                <span>Acompanhe aqui o resumo da sua produtividade e saldo de pontos.</span>
+            </div>
+            </div>
+            <span className="material-icons-round absolute -right-4 -bottom-8 text-[180px] opacity-10">military_tech</span>
+        </div>
+      );
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-blue-600 rounded-xl p-8 text-white relative overflow-hidden shadow-lg">
-        <div className="relative z-10">
-          <h1 className="text-2xl font-bold mb-2">Olá, Policial!</h1>
-          <div className="flex items-center gap-2 text-blue-100 text-sm">
-            <span className="material-icons-round text-lg">schedule</span>
-            <span>Acompanhe aqui o resumo da sua produtividade e saldo de pontos.</span>
-          </div>
-        </div>
-        <span className="material-icons-round absolute -right-4 -bottom-8 text-[180px] opacity-10">military_tech</span>
-      </div>
+      
+      {/* Banner Dinâmico */}
+      {renderBanner()}
 
+      {/* Cards de Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           icon="trending_up" 
