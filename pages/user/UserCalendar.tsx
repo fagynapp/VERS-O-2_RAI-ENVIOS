@@ -16,7 +16,7 @@ const UserCalendar = () => {
   // Estado para controlar a data SELECIONADA pelo clique
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
 
-  // Mock do usuário logado (Adicionado Aniversário para a regra de negócio)
+  // Mock do Usuário Atual (Em produção viria do AuthContext)
   const currentUser = {
     nome: 'SD LUCAS MIGUEL',
     matricula: '39874',
@@ -230,7 +230,8 @@ const UserCalendar = () => {
   for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 animate-[fadeIn_0.3s_ease-out] pb-10 h-full">
+    // FIX: Alterado de 'h-full' para 'lg:h-full h-auto' para permitir que o layout cresça no mobile
+    <div className="flex flex-col lg:flex-row gap-6 animate-[fadeIn_0.3s_ease-out] pb-10 lg:h-full h-auto">
       {/* Lado Esquerdo: Calendário */}
       <div className="flex-1 bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden flex flex-col transition-all duration-300">
         {/* Header */}
@@ -265,7 +266,7 @@ const UserCalendar = () => {
         
         <div className="grid grid-cols-7 bg-slate-100 gap-px border-b border-slate-200 flex-1">
            {calendarDays.map((day, idx) => {
-             if (day === null) return <div key={`empty-${idx}`} className="bg-slate-50/50 min-h-[112px]" />;
+             if (day === null) return <div key={`empty-${idx}`} className="bg-slate-50/50 min-h-[90px] md:min-h-[112px]" />;
 
              const dateKey = getDateKey(day);
              const status = getDayStatus(day);
@@ -280,7 +281,8 @@ const UserCalendar = () => {
                <div 
                   key={day} 
                   onClick={() => handleDaySelect(day)}
-                  className={`min-h-[112px] p-2 relative flex flex-col justify-between transition-all cursor-pointer group 
+                  // FIX: Ajustada min-h para 90px no mobile para caber melhor na tela, mas manter visibilidade
+                  className={`min-h-[90px] md:min-h-[112px] p-2 relative flex flex-col justify-between transition-all cursor-pointer group 
                     ${isSelected ? 'bg-green-50 ring-4 ring-inset ring-green-400 z-20' : ''}
                     ${!isSelected && isBlocked ? 'bg-slate-100 hover:bg-red-50' : !isSelected && isOrdinario ? 'bg-white hover:bg-blue-50' : 'bg-white hover:bg-slate-50'}
                   `}

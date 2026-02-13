@@ -43,15 +43,15 @@ const UserHistory = () => {
       <section>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
               <span className="material-icons-round">description</span>
             </div>
-            <div>
-               <h2 className="text-lg font-bold text-gray-800">Meus Registros (RAIs)</h2>
-               <p className="text-xs text-gray-400">Histórico completo de produtividade enviada</p>
+            <div className="min-w-0">
+               <h2 className="text-lg font-bold text-gray-800 truncate">Meus Registros (RAIs)</h2>
+               <p className="text-xs text-gray-400 truncate">Histórico completo de produtividade enviada</p>
             </div>
-            <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded border border-blue-100 uppercase tracking-wider">
-               Total: {userRaiRecords.length}
+            <span className="ml-2 px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-black rounded border border-blue-100 uppercase tracking-wider whitespace-nowrap shrink-0">
+               TOTAL: {userRaiRecords.length}
             </span>
           </div>
         </div>

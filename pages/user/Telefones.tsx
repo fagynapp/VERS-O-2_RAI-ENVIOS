@@ -265,20 +265,20 @@ const UserTelefones = () => {
       </div>
 
       {/* Barra de Busca e Botão Novo Contato */}
-      <div className="flex flex-col md:flex-row gap-3 sticky top-0 z-20">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex-1 relative">
-            <span className="material-icons-round absolute left-7 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+      <div className="flex gap-3 sticky top-0 z-20">
+        <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm flex-1 relative transition-all">
+            <span className="material-icons-round absolute left-6 md:left-7 top-1/2 -translate-y-1/2 text-slate-400">search</span>
             <input 
                 type="text"
                 placeholder="Buscar por nome, assunto ou número..."
-                className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                className="w-full pl-10 pr-8 md:pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
                 <button 
                 onClick={clearSearch}
-                className="absolute right-7 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 hover:bg-slate-100 p-1 rounded-full transition-colors flex items-center justify-center"
+                className="absolute right-5 md:right-7 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 hover:bg-slate-100 p-1 rounded-full transition-colors flex items-center justify-center"
                 title="Limpar busca"
                 >
                 <span className="material-icons-round text-lg">close</span>
@@ -287,7 +287,7 @@ const UserTelefones = () => {
         </div>
         <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm flex items-center justify-center transition-colors w-16 shrink-0"
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm flex items-center justify-center transition-colors w-14 md:w-16 shrink-0"
             title="Novo Contato"
         >
             <span className="material-icons-round text-2xl">person_add</span>
