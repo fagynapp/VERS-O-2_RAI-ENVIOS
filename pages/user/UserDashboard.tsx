@@ -17,13 +17,13 @@ const StatCard = ({ icon, label, value, sub, color }: any) => (
 );
 
 const UserDashboard = () => {
-  const { userPoints, userRaiRecords, cpcQueue, cpcQueueConfig } = usePoliceData();
+  const { userPoints, userRaiRecords, cpcQueue, cpcQueueConfig, calendarRegistros } = usePoliceData();
 
   // Mock do Usuário Atual (Em produção viria do AuthContext)
   const currentUser = {
     nome: 'SD LUCAS MIGUEL',
-    matricula: '39874', // Matrícula que será usada para verificar a fila
-    aniversario: '24/01', // Alterar esta data para testar o card de aniversário
+    matricula: '39874', // Matrícula que será usada para verificar a fila e o calendário
+    aniversario: '24/01', 
     primeiroNome: 'Lucas Miguel'
   };
 
@@ -33,6 +33,36 @@ const UserDashboard = () => {
   
   // Pegar as 3 atividades mais recentes
   const recentActivities = userRaiRecords.slice(0, 3);
+
+  // --- LÓGICA PRÓXIMA DISPENSA ---
+  const nextDispensa = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Zera hora para comparar apenas data
+
+    // 1. Encontra todas as datas que possuem registro para a matrícula do usuário
+    const myDates = Object.entries(calendarRegistros)
+      .filter(([dateKey, registros]) => {
+        return registros.some(r => r.matricula === currentUser.matricula);
+      })
+      .map(([dateKey]) => dateKey);
+
+    // 2. Filtra apenas datas futuras ou hoje
+    const futureDates = myDates.filter(dateKey => {
+        const [ano, mes, dia] = dateKey.split('-').map(Number);
+        const dateObj = new Date(ano, mes - 1, dia);
+        return dateObj >= today;
+    });
+
+    // 3. Ordena (String 'YYYY-MM-DD' ordena corretamente alfabeticamente)
+    futureDates.sort();
+
+    // 4. Retorna a primeira formatada ou "---"
+    if (futureDates.length > 0) {
+        const [ano, mes, dia] = futureDates[0].split('-');
+        return `${dia}/${mes}`;
+    }
+    return "---";
+  }, [calendarRegistros, currentUser.matricula]);
 
   // --- LÓGICA DE NOTIFICAÇÕES (Prioridade) ---
   const notifications = useMemo(() => {
@@ -175,7 +205,6 @@ const UserDashboard = () => {
       }
 
       // Caso 3: Alerta de Vencimento (Demais - AZUL, ou Vermelho se crítico, mas seguindo a regra "Demais: AZUL", manterei padrão ou um azul de alerta)
-      // Nota: Alertas de vencimento são tecnicamente "Sistema", mas não "ADM". Vou manter um tom de alerta mas dentro do espectro solicitado ou padrão.
       if (activeNotification?.type === 'EXPIRING') {
           return (
             <div className="bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
@@ -226,7 +255,8 @@ const UserDashboard = () => {
         <StatCard 
           icon="event" 
           label="Próxima Dispensa" 
-          value="---" 
+          value={nextDispensa} 
+          sub={nextDispensa !== "---" ? "Agendada" : "Sem registro"}
           color="bg-blue-500" 
         />
         <StatCard 
