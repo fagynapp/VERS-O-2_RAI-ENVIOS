@@ -13,16 +13,17 @@ interface AuditoriaItem {
   equipe: string;
   status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
   motivoReprovacao?: string;
+  obs?: string; // Campo para anotações do ADM
 }
 
 // --- Mock Data ---
 const MOCK_AUDITORIA: AuditoriaItem[] = [
-  { id: 1, dataEnvio: '2024-01-24', dataRai: '2024-01-23', numeroRai: '20240001500', natureza: 'Prisão em Flagrante', pontos: 50, policial: 'SD LUCAS MIGUEL', matricula: '39874', equipe: 'Alpha', status: 'PENDENTE' },
-  { id: 2, dataEnvio: '2024-01-24', dataRai: '2024-01-22', numeroRai: '20240001580', natureza: 'Recuperação de Veículo', pontos: 20, policial: '1º SGT RAMOS', matricula: '24955', equipe: 'Alpha', status: 'PENDENTE' },
-  { id: 3, dataEnvio: '2024-01-23', dataRai: '2024-01-20', numeroRai: '20240001600', natureza: 'Apreensão de Arma', pontos: 30, policial: 'CB PASSOS', matricula: '38183', equipe: 'P2', status: 'APROVADO' },
-  { id: 4, dataEnvio: '2024-01-22', dataRai: '2023-11-15', numeroRai: '20230550123', natureza: 'TCO', pontos: 10, policial: 'SD BRITO', matricula: '39580', equipe: 'Charlie', status: 'REPROVADO', motivoReprovacao: 'RAI fora do prazo (90 dias)' },
-  { id: 5, dataEnvio: '2024-01-24', dataRai: '2024-01-24', numeroRai: '20240001750', natureza: 'Prisão em Flagrante', pontos: 50, policial: '3º SGT JAIRO', matricula: '35768', equipe: 'Delta', status: 'PENDENTE' },
-  { id: 6, dataEnvio: '2024-01-24', dataRai: '2024-01-23', numeroRai: '20240001800', natureza: 'TCO', pontos: 10, policial: 'CB CASTRO', matricula: '36277', equipe: 'Delta', status: 'PENDENTE' },
+  { id: 1, dataEnvio: '2024-01-24', dataRai: '2024-01-23', numeroRai: '20240001500', natureza: 'Prisão em Flagrante', pontos: 50, policial: 'SD LUCAS MIGUEL', matricula: '39874', equipe: 'Alpha', status: 'PENDENTE', obs: '' },
+  { id: 2, dataEnvio: '2024-01-24', dataRai: '2024-01-22', numeroRai: '20240001580', natureza: 'Recuperação de Veículo', pontos: 20, policial: '1º SGT RAMOS', matricula: '24955', equipe: 'Alpha', status: 'PENDENTE', obs: 'Verificar se o veículo foi restituído.' },
+  { id: 3, dataEnvio: '2024-01-23', dataRai: '2024-01-20', numeroRai: '20240001600', natureza: 'Apreensão de Arma', pontos: 30, policial: 'CB PASSOS', matricula: '38183', equipe: 'P2', status: 'APROVADO', obs: '' },
+  { id: 4, dataEnvio: '2024-01-22', dataRai: '2023-11-15', numeroRai: '20230550123', natureza: 'TCO', pontos: 10, policial: 'SD BRITO', matricula: '39580', equipe: 'Charlie', status: 'REPROVADO', motivoReprovacao: 'RAI fora do prazo (90 dias)', obs: '' },
+  { id: 5, dataEnvio: '2024-01-24', dataRai: '2024-01-24', numeroRai: '20240001750', natureza: 'Prisão em Flagrante', pontos: 50, policial: '3º SGT JAIRO', matricula: '35768', equipe: 'Delta', status: 'PENDENTE', obs: '' },
+  { id: 6, dataEnvio: '2024-01-24', dataRai: '2024-01-23', numeroRai: '20240001800', natureza: 'TCO', pontos: 10, policial: 'CB CASTRO', matricula: '36277', equipe: 'Delta', status: 'PENDENTE', obs: '' },
 ];
 
 const AdminAuditoria = () => {
@@ -30,10 +31,24 @@ const AdminAuditoria = () => {
   const [activeTab, setActiveTab] = useState<'PENDENTES' | 'APROVADOS' | 'REPROVADOS'>('PENDENTES');
   const [search, setSearch] = useState('');
 
+  // --- Estados de Expansão e Notas ---
+  const [expandedRecordId, setExpandedRecordId] = useState<number | null>(null);
+  const [noteText, setNoteText] = useState('');
+
   // --- Estados do Modal de Reprovação ---
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+
+  // --- Estados do Modal de Edição ---
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<AuditoriaItem | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    numeroRai: '',
+    natureza: '',
+    pontos: 0,
+    dataRai: ''
+  });
 
   // --- Estatísticas ---
   const stats = useMemo(() => {
@@ -80,21 +95,38 @@ const AdminAuditoria = () => {
     return value;
   };
 
-  // --- Ações ---
+  // --- Ações de Expansão e Notas ---
+  const toggleExpand = (id: number) => {
+    if (expandedRecordId === id) {
+      setExpandedRecordId(null);
+      setNoteText('');
+    } else {
+      setExpandedRecordId(id);
+      const item = items.find(i => i.id === id);
+      setNoteText(item?.obs || '');
+    }
+  };
+
+  const handleSaveNote = (id: number) => {
+    setItems(prev => prev.map(item => 
+      item.id === id ? { ...item, obs: noteText } : item
+    ));
+    alert("Anotação salva com sucesso!");
+  };
+
+  // --- Ações de Aprovação/Reprovação ---
   const handleApprove = (id: number) => {
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, status: 'APROVADO' } : item
     ));
   };
 
-  // Abre o modal de reprovação
   const handleRejectClick = (id: number) => {
     setRejectId(id);
-    setRejectReason(''); // Limpa o motivo
+    setRejectReason('');
     setShowRejectModal(true);
   };
 
-  // Confirma a reprovação (chamado pelo modal)
   const confirmReject = (e: React.FormEvent) => {
     e.preventDefault();
     if (rejectId !== null) {
@@ -107,16 +139,44 @@ const AdminAuditoria = () => {
   };
 
   const handleRevert = (id: number) => {
-    // Ação imediata (sem confirm) para garantir funcionamento
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, status: 'PENDENTE', motivoReprovacao: undefined } : item
     ));
   };
 
+  // --- Ações de Edição de Registro ---
+  const handleEditClick = (item: AuditoriaItem) => {
+    setEditingItem(item);
+    setEditFormData({
+      numeroRai: item.numeroRai,
+      natureza: item.natureza,
+      pontos: item.pontos,
+      dataRai: item.dataRai
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingItem) {
+      setItems(prev => prev.map(item => 
+        item.id === editingItem.id ? { 
+          ...item, 
+          numeroRai: editFormData.numeroRai,
+          natureza: editFormData.natureza,
+          pontos: Number(editFormData.pontos),
+          dataRai: editFormData.dataRai
+        } : item
+      ));
+      setShowEditModal(false);
+      setEditingItem(null);
+      alert("Registro atualizado com sucesso!");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Título removido */}
-
+      
       {/* 1. DASHBOARD DE RESUMO */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
@@ -232,63 +292,118 @@ const AdminAuditoria = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredList.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 text-center text-slate-500 text-xs">{formatDate(item.dataEnvio)}</td>
-                    <td className="px-4 py-3 text-center font-bold text-slate-700 text-xs">{formatDate(item.dataRai)}</td>
-                    <td className="px-4 py-3 font-mono text-blue-600 font-bold">{item.numeroRai}</td>
-                    <td className="px-4 py-3 text-slate-700 font-medium text-xs max-w-[150px] truncate" title={item.natureza}>{item.natureza}</td>
-                    <td className="px-4 py-3 text-center">
-                        <span className="bg-blue-50 text-blue-700 font-bold px-2 py-1 rounded border border-blue-100 text-xs">
-                           {item.pontos}
-                        </span>
-                    </td>
-                    <td className="px-4 py-3 font-bold text-slate-800 text-xs uppercase">
-                        <div>{item.policial}</div>
-                        <div className="text-[9px] text-slate-400 font-normal mt-0.5">Equipe {item.equipe}</div>
-                    </td>
-                    <td className="px-4 py-3 text-center font-mono text-slate-500 text-xs">{formatMatricula(item.matricula)}</td>
-                    
-                    {activeTab === 'REPROVADOS' && (
-                        <td className="px-4 py-3 text-xs text-red-500 italic max-w-[150px] truncate" title={item.motivoReprovacao}>
-                            {item.motivoReprovacao}
+                  <React.Fragment key={item.id}>
+                    <tr 
+                        onClick={() => toggleExpand(item.id)}
+                        className={`transition-colors cursor-pointer group ${expandedRecordId === item.id ? 'bg-blue-50/50' : 'hover:bg-slate-50'}`}
+                    >
+                        <td className="px-4 py-3 text-center text-slate-500 text-xs flex items-center justify-center gap-2">
+                            <span className={`material-icons-round text-lg transition-transform duration-200 text-gray-400 ${expandedRecordId === item.id ? 'rotate-180 text-blue-600' : ''}`}>
+                                expand_more
+                            </span>
+                            {formatDate(item.dataEnvio)}
                         </td>
-                    )}
+                        <td className="px-4 py-3 text-center font-bold text-slate-700 text-xs">{formatDate(item.dataRai)}</td>
+                        <td className="px-4 py-3 font-mono text-blue-600 font-bold">{item.numeroRai}</td>
+                        <td className="px-4 py-3 text-slate-700 font-medium text-xs max-w-[150px] truncate" title={item.natureza}>{item.natureza}</td>
+                        <td className="px-4 py-3 text-center">
+                            <span className="bg-blue-50 text-blue-700 font-bold px-2 py-1 rounded border border-blue-100 text-xs">
+                            {item.pontos}
+                            </span>
+                        </td>
+                        <td className="px-4 py-3 font-bold text-slate-800 text-xs uppercase">
+                            <div>{item.policial}</div>
+                            <div className="text-[9px] text-slate-400 font-normal mt-0.5">Equipe {item.equipe}</div>
+                        </td>
+                        <td className="px-4 py-3 text-center font-mono text-slate-500 text-xs">{formatMatricula(item.matricula)}</td>
+                        
+                        {activeTab === 'REPROVADOS' && (
+                            <td className="px-4 py-3 text-xs text-red-500 italic max-w-[150px] truncate" title={item.motivoReprovacao}>
+                                {item.motivoReprovacao}
+                            </td>
+                        )}
 
-                    <td className="px-4 py-3 text-right">
-                      {activeTab === 'PENDENTES' && (
-                        <div className="flex justify-end gap-2">
-                           <button 
-                             onClick={(e) => { e.stopPropagation(); handleApprove(item.id); }} 
-                             className="flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
-                             title="Aprovar Registro"
-                           >
-                             <span className="material-icons-round text-sm">check</span>
-                             Aprovar
-                           </button>
-                           <button 
-                             onClick={(e) => { e.stopPropagation(); handleRejectClick(item.id); }} 
-                             className="flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
-                             title="Reprovar Registro"
-                           >
-                             <span className="material-icons-round text-sm">close</span>
-                             Reprovar
-                           </button>
-                        </div>
-                      )}
-                      {(activeTab === 'APROVADOS' || activeTab === 'REPROVADOS') && (
-                        <div className="flex justify-end">
+                        <td className="px-4 py-3 text-right">
+                        {activeTab === 'PENDENTES' && (
+                            <div className="flex justify-end gap-2">
                             <button 
-                                onClick={(e) => { e.stopPropagation(); handleRevert(item.id); }} 
-                                className="text-slate-400 hover:text-blue-600 p-1.5 rounded hover:bg-blue-50 transition-colors flex items-center gap-1 text-xs font-medium"
-                                title="Reverter para Pendente"
+                                onClick={(e) => { e.stopPropagation(); handleApprove(item.id); }} 
+                                className="flex items-center gap-1 bg-green-700 text-white border border-green-700 hover:bg-green-800 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                                title="Aprovar Registro"
                             >
-                                <span className="material-icons-round text-base">undo</span>
-                                Reverter
+                                <span className="material-icons-round text-sm">check</span>
+                                Aprovar
                             </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); handleRejectClick(item.id); }} 
+                                className="flex items-center gap-1 bg-red-700 text-white border border-red-700 hover:bg-red-800 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                                title="Reprovar Registro"
+                            >
+                                <span className="material-icons-round text-sm">close</span>
+                                Reprovar
+                            </button>
+                            </div>
+                        )}
+                        {(activeTab === 'APROVADOS' || activeTab === 'REPROVADOS') && (
+                            <div className="flex justify-end">
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); handleRevert(item.id); }} 
+                                    className="flex items-center gap-1 bg-slate-900 text-white border border-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                                    title="Reverter para Pendente"
+                                >
+                                    <span className="material-icons-round text-sm">undo</span>
+                                    Reverter
+                                </button>
+                            </div>
+                        )}
+                        </td>
+                    </tr>
+
+                    {/* Linha Expandida (Accordion) */}
+                    {expandedRecordId === item.id && (
+                        <tr className="bg-blue-50/20 border-b border-blue-100 animate-[fadeIn_0.2s_ease-out]">
+                            <td colSpan={9} className="px-6 py-4">
+                                <div className="flex flex-col gap-4 pl-4 border-l-4 border-blue-200 ml-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="w-full mr-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="material-icons-round text-blue-500 text-sm">sticky_note_2</span>
+                                                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Anotações Administrativas</span>
+                                            </div>
+                                            <textarea 
+                                                value={noteText}
+                                                onChange={(e) => setNoteText(e.target.value)}
+                                                className="w-full bg-white border border-slate-200 rounded-lg p-3 text-xs text-slate-600 focus:ring-2 focus:ring-blue-500 outline-none resize-none shadow-sm"
+                                                rows={2}
+                                                placeholder="Escreva observações internas sobre este registro..."
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                            <div className="mt-2 flex gap-2">
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleSaveNote(item.id); }}
+                                                    className="text-[10px] font-bold bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition-colors"
+                                                >
+                                                    Salvar Nota
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="shrink-0 flex flex-col gap-2 border-l border-slate-100 pl-4">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase">Ações do Registro</span>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); handleEditClick(item); }}
+                                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-colors"
+                                            >
+                                                <span className="material-icons-round text-base">edit_note</span>
+                                                Editar Dados
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -349,6 +464,89 @@ const AdminAuditoria = () => {
                   className="px-6 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-lg shadow-red-200 transition-colors"
                 >
                   Confirmar Reprovação
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. MODAL DE EDIÇÃO DE REGISTRO */}
+      {showEditModal && editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-[fadeIn_0.2s_ease-out]">
+            <div className="bg-blue-600 p-5 flex justify-between items-center text-white">
+              <div className="flex items-center gap-3">
+                <span className="material-icons-round text-2xl">edit_note</span>
+                <div>
+                  <h3 className="font-bold text-lg">Editar Registro</h3>
+                  <p className="text-[10px] opacity-80 uppercase tracking-wider">Correção de Dados</p>
+                </div>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="hover:bg-white/20 p-1 rounded transition-colors">
+                <span className="material-icons-round">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
+              
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4">
+                 <p className="text-xs text-blue-800 font-bold uppercase mb-1">Policial: {editingItem.policial}</p>
+                 <p className="text-[10px] text-blue-600">Matrícula: {formatMatricula(editingItem.matricula)}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nº RAI</label>
+                    <input 
+                        value={editFormData.numeroRai}
+                        onChange={(e) => setEditFormData({...editFormData, numeroRai: e.target.value})}
+                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-600 outline-none"
+                    />
+                 </div>
+                 <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Data Ocorrência</label>
+                    <input 
+                        type="date"
+                        value={editFormData.dataRai}
+                        onChange={(e) => setEditFormData({...editFormData, dataRai: e.target.value})}
+                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-blue-600 outline-none"
+                    />
+                 </div>
+              </div>
+
+              <div>
+                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Natureza</label>
+                 <input 
+                    value={editFormData.natureza}
+                    onChange={(e) => setEditFormData({...editFormData, natureza: e.target.value})}
+                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-blue-600 outline-none"
+                 />
+              </div>
+
+              <div>
+                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Pontuação</label>
+                 <input 
+                    type="number"
+                    value={editFormData.pontos}
+                    onChange={(e) => setEditFormData({...editFormData, pontos: Number(e.target.value)})}
+                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold text-blue-600 focus:ring-2 focus:ring-blue-600 outline-none"
+                 />
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEditModal(false)} 
+                  className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-colors"
+                >
+                  Salvar Alterações
                 </button>
               </div>
             </form>

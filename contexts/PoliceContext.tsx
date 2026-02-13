@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 export interface Policial {
   id: number;
@@ -57,6 +57,10 @@ interface PoliceContextData {
   setCalendarRegistros: React.Dispatch<React.SetStateAction<Record<string, DispensaRegistro[]>>>;
   calendarBloqueios: Record<string, string>;
   setCalendarBloqueios: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+
+  // Logotipo Global para Relatórios
+  reportLogo: string | null;
+  setReportLogo: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 const PoliceContext = createContext<PoliceContextData>({} as PoliceContextData);
@@ -207,6 +211,20 @@ export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
   const [calendarRegistros, setCalendarRegistros] = useState<Record<string, DispensaRegistro[]>>({});
   const [calendarBloqueios, setCalendarBloqueios] = useState<Record<string, string>>({});
 
+  // Estado Global do Logotipo com Persistência
+  const [reportLogo, setReportLogo] = useState<string | null>(() => {
+    return localStorage.getItem('global_report_logo');
+  });
+
+  // Efeito para persistir o logo sempre que mudar
+  useEffect(() => {
+    if (reportLogo) {
+      localStorage.setItem('global_report_logo', reportLogo);
+    } else {
+      localStorage.removeItem('global_report_logo');
+    }
+  }, [reportLogo]);
+
   return (
     <PoliceContext.Provider value={{ 
       policiais, 
@@ -222,7 +240,9 @@ export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
       calendarRegistros,
       setCalendarRegistros,
       calendarBloqueios,
-      setCalendarBloqueios
+      setCalendarBloqueios,
+      reportLogo,
+      setReportLogo
     }}>
       {children}
     </PoliceContext.Provider>

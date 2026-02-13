@@ -14,7 +14,7 @@ interface RankingData {
 }
 
 const AdminRanking = () => {
-  const { policiais, availableTeams } = usePoliceData();
+  const { policiais, availableTeams, reportLogo } = usePoliceData(); // Consume reportLogo
   
   const [search, setSearch] = useState('');
   const [selectedEquipe, setSelectedEquipe] = useState('TODAS');
@@ -305,6 +305,7 @@ const AdminRanking = () => {
     }
 
     const dateStr = new Date().toISOString().split('T')[0];
+    const todayFormatted = new Date().toLocaleDateString('pt-BR');
     
     // Define sufixo do nome do arquivo
     let teamLabel = "Geral";
@@ -330,16 +331,51 @@ const AdminRanking = () => {
     } 
     else if (exportFormat === 'pdf') {
         const doc = new jsPDF();
-        
-        let headerTeams = selectedExportTeams.length === availableTeams.length ? 'TODAS' : selectedExportTeams.join(', ');
-        if (headerTeams.length > 70) headerTeams = headerTeams.substring(0, 67) + '...';
+        const pageWidth = doc.internal.pageSize.width;
 
-        // Título
-        doc.setFontSize(16);
-        doc.text("Relatório de Ranking - RAI ENVIOS", 14, 15);
+        // --- CABEÇALHO PADRÃO (Igual a Configuracoes.tsx) ---
+        doc.setFillColor(37, 99, 235); // Blue 600
+        doc.rect(0, 0, pageWidth, 40, 'F');
+        
+        let textX = 14;
+        
+        // Desenha o logotipo se existir
+        if (reportLogo) {
+            try {
+                const imgProps = doc.getImageProperties(reportLogo);
+                const originalRatio = imgProps.width / imgProps.height;
+                const maxWidth = 35;
+                const maxHeight = 30;
+                let finalW = maxWidth;
+                let finalH = maxWidth / originalRatio;
+
+                if (finalH > maxHeight) {
+                    finalH = maxHeight;
+                    finalW = maxHeight * originalRatio;
+                }
+                const posY = (40 - finalH) / 2;
+                doc.addImage(reportLogo, 'PNG', 14, posY, finalW, finalH); 
+                textX = 14 + finalW + 5; 
+            } catch (error) {
+                console.error("Erro ao adicionar logo ao PDF Ranking", error);
+            }
+        }
+
+        // Título e Subtítulo
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.text("RELATÓRIO DE RANKING", textX, 20);
         doc.setFontSize(10);
-        doc.text(`Equipe(s): ${headerTeams}`, 14, 22);
-        doc.text(`Data Emissão: ${dateStr}`, 14, 27);
+        doc.setFont('helvetica', 'normal');
+        
+        let headerTeams = selectedExportTeams.length === availableTeams.length ? 'TODAS AS EQUIPES' : selectedExportTeams.join(', ');
+        if (headerTeams.length > 60) headerTeams = headerTeams.substring(0, 57) + '...';
+        
+        doc.text(`Equipe(s): ${headerTeams}`, textX, 28);
+        
+        doc.setFontSize(9);
+        doc.text(`Gerado em: ${todayFormatted}`, pageWidth - 14, 35, { align: 'right' });
 
         // Tabela
         const tableBody = dataToExport.map((item, index) => [
@@ -354,9 +390,15 @@ const AdminRanking = () => {
         autoTable(doc, {
             head: [['Pos', 'Policial', 'Matrícula', 'Equipe', 'RAIs', 'Pontos']],
             body: tableBody,
-            startY: 32,
+            startY: 50, // Ajustado para não colidir com o cabeçalho
             theme: 'grid',
-            headStyles: { fillColor: [37, 99, 235] }, // Blue-600
+            headStyles: { fillColor: [71, 85, 105] }, // Slate 600 (Combina com o estilo manual)
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+                0: { halign: 'center', fontStyle: 'bold', width: 20 },
+                4: { halign: 'center' },
+                5: { halign: 'center', fontStyle: 'bold', textColor: [37, 99, 235] }
+            }
         });
 
         doc.save(`${filename}.pdf`);
