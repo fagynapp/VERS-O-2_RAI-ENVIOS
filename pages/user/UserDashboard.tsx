@@ -17,7 +17,7 @@ const StatCard = ({ icon, label, value, sub, color }: any) => (
 );
 
 const UserDashboard = () => {
-  const { userPoints, userRaiRecords, cpcQueue } = usePoliceData();
+  const { userPoints, userRaiRecords, cpcQueue, cpcQueueConfig } = usePoliceData();
 
   // Mock do Usuário Atual (Em produção viria do AuthContext)
   const currentUser = {
@@ -40,7 +40,7 @@ const UserDashboard = () => {
     const today = new Date();
     const currentDayMonth = today.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-    // 1. Verificação de Fila CPC (Prioridade Máxima)
+    // 1. Verificação de Fila CPC (Prioridade Máxima - Notificação ADM)
     // Verifica se o usuário está na lista da fila
     const userInQueue = cpcQueue.find(item => item.matricula === currentUser.matricula);
     if (userInQueue) {
@@ -96,23 +96,32 @@ const UserDashboard = () => {
 
   // Renderização condicional do Banner
   const renderBanner = () => {
-      // Caso 1: Fila CPC Ativa para o usuário
+      // Caso 1: Fila CPC Ativa para o usuário (Notificação ADM - VERMELHO/LARANJA)
       if (activeNotification?.type === 'QUEUE') {
           const pos = activeNotification.data.posicao;
           const isFirst = pos === 1;
+          const criterea = cpcQueueConfig?.criterio || 'Geral';
           
           return (
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-6 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
-                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Atenção Necessária</span>
-                            <span className="text-orange-100 text-xs flex items-center gap-1"><span className="material-icons-round text-sm">timer</span> Expira em breve</span>
+            <div className="bg-gradient-to-r from-orange-600 to-orange-500 rounded-xl p-6 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
+                {/* Etiqueta de Critério */}
+                <div className="absolute top-0 left-0 bg-black/20 px-3 py-1 rounded-br-lg">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-white/90">
+                        FILA CPC: Fila {criterea === 'ALMANAQUE' ? 'Almanaque' : 'Produtividade'}
+                    </p>
+                </div>
+
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-4">
+                    <div className="flex-1 w-full">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-white/10">Atenção Necessária</span>
+                            <span className="text-orange-100 text-xs flex items-center gap-1 font-medium"><span className="material-icons-round text-sm">timer</span> Expira em breve</span>
                         </div>
-                        <h1 className="text-3xl font-black mb-1 leading-tight">
+                        <h1 className="text-3xl font-black mb-2 leading-none uppercase">
                             {isFirst ? 'É SUA VEZ DE ESCOLHER!' : `VOCÊ É O ${pos}º DA FILA!`}
                         </h1>
-                        <p className="text-orange-100 text-sm opacity-90 max-w-lg">
+                        {/* Texto ajustado para não quebrar linha indevidamente */}
+                        <p className="text-orange-50 text-sm font-medium opacity-95 w-full leading-snug">
                             {isFirst 
                                 ? "A fila CPC chegou em você. Acesse o menu 'Calendário' agora para garantir sua data." 
                                 : "Fique atento! A fila está andando e sua vez de escolher a dispensa está próxima."}
@@ -120,16 +129,16 @@ const UserDashboard = () => {
                     </div>
 
                     {/* Lista dos Top 3 da Fila */}
-                    <div className="bg-white/10 rounded-xl p-3 border border-white/20 w-full md:w-64 backdrop-blur-sm">
+                    <div className="bg-black/10 rounded-xl p-3 border border-white/10 w-full md:w-64 backdrop-blur-sm shrink-0">
                         <p className="text-[10px] font-bold text-orange-100 uppercase mb-2 border-b border-white/10 pb-1">Status da Fila</p>
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                             {activeNotification.queueList.map((item: any) => (
-                                <div key={item.matricula} className={`flex items-center justify-between text-xs ${item.matricula === currentUser.matricula ? 'font-black text-white bg-white/20 rounded px-2 py-1 -mx-2' : 'text-orange-50 font-medium'}`}>
+                                <div key={item.matricula} className={`flex items-center justify-between text-xs p-1 rounded ${item.matricula === currentUser.matricula ? 'bg-white/20 font-bold text-white' : 'text-orange-50 font-medium'}`}>
                                     <div className="flex items-center gap-2">
-                                        <span className="w-4 h-4 rounded-full bg-white text-orange-600 flex items-center justify-center text-[9px] font-bold">{item.posicao}</span>
-                                        <span className="truncate max-w-[120px] uppercase">{item.nome.split(' ').slice(0,2).join(' ')}</span>
+                                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${item.matricula === currentUser.matricula ? 'bg-white text-orange-600' : 'bg-white/90 text-orange-500'}`}>{item.posicao}</span>
+                                        <span className="truncate max-w-[120px] uppercase text-[10px]">{item.nome.split(' ').slice(0,2).join(' ')}</span>
                                     </div>
-                                    {item.posicao === 1 && <span className="animate-pulse w-2 h-2 bg-green-400 rounded-full"></span>}
+                                    {item.posicao === 1 && <span className="w-2 h-2 bg-green-400 rounded-full shadow-sm animate-pulse"></span>}
                                 </div>
                             ))}
                         </div>
@@ -140,17 +149,17 @@ const UserDashboard = () => {
           );
       }
 
-      // Caso 2: Aniversário
+      // Caso 2: Aniversário (Demais - AZUL)
       if (activeNotification?.type === 'BIRTHDAY') {
           return (
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
                 <div className="relative z-10 flex items-center gap-6">
                     <div className="hidden md:flex w-20 h-20 bg-white/20 rounded-full items-center justify-center backdrop-blur-sm shrink-0">
                         <span className="material-icons-round text-5xl">cake</span>
                     </div>
                     <div>
                         <h1 className="text-3xl font-black mb-2">Feliz Aniversário, Guerreiro!</h1>
-                        <p className="text-purple-100 text-sm opacity-90 max-w-xl leading-relaxed">
+                        <p className="text-blue-100 text-sm opacity-90 max-w-xl leading-relaxed">
                             O Batalhão agradece por mais um ano de vida e dedicação. Que seu novo ciclo seja repleto de conquistas e segurança. Aproveite o seu dia!
                         </p>
                     </div>
@@ -163,16 +172,17 @@ const UserDashboard = () => {
           );
       }
 
-      // Caso 3: Alerta de Vencimento
+      // Caso 3: Alerta de Vencimento (Demais - AZUL, ou Vermelho se crítico, mas seguindo a regra "Demais: AZUL", manterei padrão ou um azul de alerta)
+      // Nota: Alertas de vencimento são tecnicamente "Sistema", mas não "ADM". Vou manter um tom de alerta mas dentro do espectro solicitado ou padrão.
       if (activeNotification?.type === 'EXPIRING') {
           return (
-            <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
+            <div className="bg-gradient-to-r from-blue-700 to-blue-800 rounded-xl p-8 text-white relative overflow-hidden shadow-lg animate-[fadeIn_0.5s_ease-out]">
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2 text-red-200">
-                        <span className="bg-red-800/50 px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-500">Ação Necessária</span>
+                    <div className="flex items-center gap-2 mb-2 text-blue-200">
+                        <span className="bg-red-500 text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase border border-red-400">Ação Necessária</span>
                     </div>
                     <h1 className="text-2xl font-bold mb-1">Atenção aos Prazos!</h1>
-                    <p className="text-red-100 text-sm opacity-90">
+                    <p className="text-blue-100 text-sm opacity-90">
                         {activeNotification.message} Registre ou justifique-os antes que completem 90 dias para não perder a pontuação.
                     </p>
                 </div>
@@ -181,7 +191,7 @@ const UserDashboard = () => {
           );
       }
 
-      // Caso 4: Padrão (Sem notificações críticas)
+      // Caso 4: Padrão (Sem notificações críticas - AZUL)
       return (
         <div className="bg-blue-600 rounded-xl p-8 text-white relative overflow-hidden shadow-lg">
             <div className="relative z-10">

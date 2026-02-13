@@ -49,6 +49,13 @@ export interface CpcQueueItem {
   expiraEm?: string;
 }
 
+// Interface para Configuração da Fila CPC
+export interface CpcQueueConfig {
+  criterio: string;
+  equipe: string;
+  prazo: number;
+}
+
 interface PoliceContextData {
   policiais: Policial[];
   setPoliciais: React.Dispatch<React.SetStateAction<Policial[]>>;
@@ -70,6 +77,8 @@ interface PoliceContextData {
   // Estado Global da Fila CPC (Notificação)
   cpcQueue: CpcQueueItem[];
   setCpcQueue: React.Dispatch<React.SetStateAction<CpcQueueItem[]>>;
+  cpcQueueConfig: CpcQueueConfig | null;
+  setCpcQueueConfig: React.Dispatch<React.SetStateAction<CpcQueueConfig | null>>;
 
   // Logotipo Global para Relatórios
   reportLogo: string | null;
@@ -226,6 +235,7 @@ export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
 
   // Estado Global da Fila CPC (NOVO)
   const [cpcQueue, setCpcQueue] = useState<CpcQueueItem[]>([]);
+  const [cpcQueueConfig, setCpcQueueConfig] = useState<CpcQueueConfig | null>(null);
 
   // Estado Global do Logotipo com Persistência
   const [reportLogo, setReportLogo] = useState<string | null>(() => {
@@ -259,6 +269,8 @@ export const PoliceProvider = ({ children }: { children?: ReactNode }) => {
       setCalendarBloqueios,
       cpcQueue,
       setCpcQueue,
+      cpcQueueConfig,
+      setCpcQueueConfig,
       reportLogo,
       setReportLogo
     }}>

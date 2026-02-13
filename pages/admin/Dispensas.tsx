@@ -19,7 +19,7 @@ const MOCK_REGISTROS: DispensaRegistro[] = [
 ];
 
 const AdminDispensas = () => {
-  const { setCpcQueue } = usePoliceData(); // Usando o Contexto
+  const { setCpcQueue, setCpcQueueConfig } = usePoliceData(); // Usando o Contexto
   const [activeTab, setActiveTab] = useState<'GERAL' | 'FILA' | 'CONFIG'>('GERAL');
   const [search, setSearch] = useState('');
 
@@ -70,6 +70,11 @@ const AdminDispensas = () => {
           // Atualiza o contexto global
           // @ts-ignore
           setCpcQueue(novaFila);
+          setCpcQueueConfig({
+              criterio: criterioFila,
+              equipe: equipeFila,
+              prazo: prazoFila
+          });
           
           alert(`Fila iniciada! 3 Policiais notificados no painel.`);
       }
