@@ -389,14 +389,17 @@ const AdminBancoDados = () => {
         {/* Botões de Ação Direita */}
         <div className="flex gap-2 w-full md:w-auto">
              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv, .xlsx" />
-             <button onClick={handleImportClick} className="px-4 h-10 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-green-700 hover:bg-green-50 hover:border-green-200 transition-colors shadow-sm font-bold text-xs uppercase tracking-wide">
-                  <span className="material-icons-round text-lg">upload_file</span>
-                  Importar Excel
+             <button 
+                onClick={handleImportClick} 
+                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors shadow-sm"
+                title="Importar Excel"
+             >
+                  <span className="material-icons-round text-2xl">upload_file</span>
              </button>
              
-             <button onClick={handleNew} className="px-4 h-10 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200 flex items-center gap-2 font-bold text-xs uppercase tracking-wide">
-                <span className="material-icons-round text-lg">add</span>
-                Novo Registro
+             {/* PADRONIZAÇÃO DO BOTÃO + */}
+             <button onClick={handleNew} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors" title="Novo Registro">
+                <span className="material-icons-round text-2xl">add</span>
              </button>
         </div>
       </div>

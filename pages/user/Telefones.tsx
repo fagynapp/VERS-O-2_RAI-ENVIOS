@@ -265,7 +265,7 @@ const UserTelefones = () => {
       </div>
 
       {/* Barra de Busca e Botão Novo Contato */}
-      <div className="flex gap-3 sticky top-0 z-20">
+      <div className="flex gap-3 sticky top-0 z-20 items-center">
         <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm flex-1 relative transition-all">
             <span className="material-icons-round absolute left-6 md:left-7 top-1/2 -translate-y-1/2 text-slate-400">search</span>
             <input 
@@ -285,12 +285,13 @@ const UserTelefones = () => {
                 </button>
             )}
         </div>
+        {/* PADRONIZAÇÃO DO BOTÃO + */}
         <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm flex items-center justify-center transition-colors w-14 md:w-16 shrink-0"
+            className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors shrink-0"
             title="Novo Contato"
         >
-            <span className="material-icons-round text-2xl">person_add</span>
+            <span className="material-icons-round text-2xl">add</span>
         </button>
       </div>
 

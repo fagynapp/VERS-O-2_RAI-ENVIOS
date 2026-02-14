@@ -403,8 +403,8 @@ const AdminGestaoPoliciais = () => {
         </div>
       </div>
 
-      {/* Barra de Ações, Abas e Filtros */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+      {/* Barra de Ações, Abas e Filtros - LAYOUT ATUALIZADO PARA MOBILE */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between z-20 relative">
         {/* Busca */}
         <div className="relative w-full md:w-80">
           <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
@@ -424,33 +424,33 @@ const AdminGestaoPoliciais = () => {
           )}
         </div>
 
-        {/* Seletor de Abas (Segmented Control) */}
-        <div className="flex bg-slate-100 p-1 rounded-lg">
+        {/* Seletor de Abas (Segmented Control) - Centered */}
+        <div className="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto justify-center">
           <button 
             onClick={() => setActiveTab('POLICIAIS')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'POLICIAIS' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}
+            className={`flex-1 md:flex-none px-6 md:px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${activeTab === 'POLICIAIS' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}
           >
             <span className="material-icons-round text-sm">badge</span>
             Cadastro
           </button>
           <button 
             onClick={() => setActiveTab('AFASTAMENTOS')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'AFASTAMENTOS' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500 hover:text-red-600'}`}
+            className={`flex-1 md:flex-none px-6 md:px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${activeTab === 'AFASTAMENTOS' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500 hover:text-red-600'}`}
           >
             <span className="material-icons-round text-sm">event_busy</span>
             Afastamentos
           </button>
         </div>
 
-        {/* Ações Direita */}
+        {/* Ações Direita - Adjusted for Mobile Stacking */}
         <div className="flex gap-2 w-full md:w-auto">
           {activeTab === 'POLICIAIS' && (
             <>
-               <div className="relative">
+               <div className="relative flex-grow md:flex-grow-0">
                 <select
                   value={selectedEquipe}
                   onChange={(e) => setSelectedEquipe(e.target.value)}
-                  className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[100px] md:min-w-[120px]"
                 >
                   <option value="TODAS">Filtros</option>
                   {availableTeams.map((team) => (
@@ -460,25 +460,25 @@ const AdminGestaoPoliciais = () => {
               </div>
               <button 
                 onClick={() => setIsTeamManagerOpen(true)}
-                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm"
+                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm shrink-0"
                 title="Gerenciar Nomes das Equipes"
               >
                 <span className="material-icons-round">edit_note</span>
               </button>
               
               <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" />
-              <button onClick={handleImportClick} className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors shadow-sm" title="Importar Excel">
+              <button onClick={handleImportClick} className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors shadow-sm shrink-0" title="Importar Excel">
                   <span className="material-icons-round">upload_file</span>
               </button>
             </>
           )}
 
            {activeTab === 'AFASTAMENTOS' && (
-             <div className="relative">
+             <div className="relative flex-grow md:flex-grow-0">
                 <select
                   value={selectedEquipe}
                   onChange={(e) => setSelectedEquipe(e.target.value)}
-                  className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
                 >
                   <option value="TODAS">Filtros</option>
                   {availableTeams.map((team) => (
@@ -488,56 +488,57 @@ const AdminGestaoPoliciais = () => {
              </div>
            )}
 
-          <button onClick={handleNew} className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors shadow-sm" title="Novo Registro">
-            <span className="material-icons-round">add</span>
+          <button onClick={handleNew} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors shrink-0" title="Novo Registro">
+            <span className="material-icons-round text-2xl">add</span>
           </button>
         </div>
       </div>
 
-      {/* Conteúdo das Abas */}
+      {/* Conteúdo das Abas e Modais (Mantido inalterado) */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         {activeTab === 'POLICIAIS' ? (
-          /* Tabela de Policiais */
           filteredPoliciais.length > 0 ? (
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
-                <tr>
-                  <th className="px-6 py-3 font-bold">Policial</th>
-                  <th className="px-6 py-3 font-bold">Matrícula</th>
-                  <th className="px-6 py-3 font-bold">Equipe/Setor</th>
-                  <th className="px-6 py-3 font-bold">Aniversário</th>
-                  <th className="px-6 py-3 font-bold">Telefone</th>
-                  <th className="px-6 py-3 font-bold">Email</th>
-                  <th className="px-6 py-3 font-bold text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredPoliciais.map((policial) => (
-                  <tr key={policial.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-slate-800">{policial.nome}</td>
-                    <td className="px-6 py-4 font-mono text-slate-600">{formatMatricula(policial.matricula)}</td>
-                    <td className="px-6 py-4">
-                      <span className={`${getEquipeColor(policial.equipe)} px-2 py-1 rounded text-[10px] font-bold uppercase`}>
-                        {policial.equipe}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">{policial.aniversario}</td>
-                    <td className="px-6 py-4 text-slate-600 text-xs">{policial.telefone}</td>
-                    <td className="px-6 py-4 text-slate-500 text-xs">{policial.email}</td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
-                          <span className="material-icons-round text-lg">edit</span>
-                        </button>
-                        <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
-                          <span className="material-icons-round text-lg">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
+                    <tr>
+                    <th className="px-6 py-3 font-bold">Policial</th>
+                    <th className="px-6 py-3 font-bold">Matrícula</th>
+                    <th className="px-6 py-3 font-bold">Equipe/Setor</th>
+                    <th className="px-6 py-3 font-bold">Aniversário</th>
+                    <th className="px-6 py-3 font-bold">Telefone</th>
+                    <th className="px-6 py-3 font-bold">Email</th>
+                    <th className="px-6 py-3 font-bold text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {filteredPoliciais.map((policial) => (
+                    <tr key={policial.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-800">{policial.nome}</td>
+                        <td className="px-6 py-4 font-mono text-slate-600">{formatMatricula(policial.matricula)}</td>
+                        <td className="px-6 py-4">
+                        <span className={`${getEquipeColor(policial.equipe)} px-2 py-1 rounded text-[10px] font-bold uppercase`}>
+                            {policial.equipe}
+                        </span>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600">{policial.aniversario}</td>
+                        <td className="px-6 py-4 text-slate-600 text-xs">{policial.telefone}</td>
+                        <td className="px-6 py-4 text-slate-500 text-xs">{policial.email}</td>
+                        <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                            <span className="material-icons-round text-lg">edit</span>
+                            </button>
+                            <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
+                            <span className="material-icons-round text-lg">delete</span>
+                            </button>
+                        </div>
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            </div>
           ) : (
             <div className="p-12 flex flex-col items-center justify-center text-center">
               <span className="material-icons-round text-slate-300 text-5xl mb-3">search_off</span>
@@ -548,54 +549,54 @@ const AdminGestaoPoliciais = () => {
             </div>
           )
         ) : (
-          /* Tabela de Afastamentos */
           <>
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
-                <tr>
-                  <th className="px-4 py-4 font-bold">Policial</th>
-                  <th className="px-4 py-4 font-bold">Matrícula</th>
-                  <th className="px-4 py-4 font-bold text-center">Equipe</th>
-                  <th className="px-4 py-4 font-bold text-center">Status</th>
-                  <th className="px-4 py-4 font-bold text-center">Data Início</th>
-                  <th className="px-4 py-4 font-bold text-center">Data Retorno</th>
-                  <th className="px-4 py-4 font-bold">Observações</th>
-                  <th className="px-4 py-4 font-bold text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredAfastamentos.map((afastamento) => (
-                  <tr key={afastamento.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-4 font-bold text-slate-800 text-sm">{afastamento.nome}</td>
-                    <td className="px-4 py-4 font-mono text-slate-600 text-xs">{formatMatricula(afastamento.matricula)}</td>
-                    <td className="px-4 py-4 text-center">
-                       <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase border border-slate-200">
-                        {afastamento.equipe}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center">
-                      <span className={`${getStatusColor(afastamento.status)} px-2 py-1 rounded-full text-[10px] font-bold uppercase`}>
-                        {afastamento.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-center text-slate-600 text-xs font-medium">{formatDate(afastamento.inicio)}</td>
-                    <td className="px-4 py-4 text-center text-slate-600 text-xs font-medium">{formatDate(afastamento.retorno)}</td>
-                    <td className="px-4 py-4 text-slate-500 text-xs max-w-xs truncate">{afastamento.obs}</td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => handleEditAbsence(afastamento)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
-                          <span className="material-icons-round text-lg">edit</span>
-                        </button>
-                        <button onClick={() => handleDeleteAbsence(afastamento.id)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
-                          <span className="material-icons-round text-lg">delete</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* Paginação Mockada */}
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
+                    <tr>
+                    <th className="px-4 py-4 font-bold">Policial</th>
+                    <th className="px-4 py-4 font-bold">Matrícula</th>
+                    <th className="px-4 py-4 font-bold text-center">Equipe</th>
+                    <th className="px-4 py-4 font-bold text-center">Status</th>
+                    <th className="px-4 py-4 font-bold text-center">Data Início</th>
+                    <th className="px-4 py-4 font-bold text-center">Data Retorno</th>
+                    <th className="px-4 py-4 font-bold">Observações</th>
+                    <th className="px-4 py-4 font-bold text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {filteredAfastamentos.map((afastamento) => (
+                    <tr key={afastamento.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-4 font-bold text-slate-800 text-sm">{afastamento.nome}</td>
+                        <td className="px-4 py-4 font-mono text-slate-600 text-xs">{formatMatricula(afastamento.matricula)}</td>
+                        <td className="px-4 py-4 text-center">
+                        <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-bold uppercase border border-slate-200">
+                            {afastamento.equipe}
+                        </span>
+                        </td>
+                        <td className="px-4 py-4 text-center">
+                        <span className={`${getStatusColor(afastamento.status)} px-2 py-1 rounded-full text-[10px] font-bold uppercase`}>
+                            {afastamento.status}
+                        </span>
+                        </td>
+                        <td className="px-4 py-4 text-center text-slate-600 text-xs font-medium">{formatDate(afastamento.inicio)}</td>
+                        <td className="px-4 py-4 text-center text-slate-600 text-xs font-medium">{formatDate(afastamento.retorno)}</td>
+                        <td className="px-4 py-4 text-slate-500 text-xs max-w-xs truncate">{afastamento.obs}</td>
+                        <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => handleEditAbsence(afastamento)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                            <span className="material-icons-round text-lg">edit</span>
+                            </button>
+                            <button onClick={() => handleDeleteAbsence(afastamento.id)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
+                            <span className="material-icons-round text-lg">delete</span>
+                            </button>
+                        </div>
+                        </td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            </div>
             <div className="p-4 border-t border-slate-100 flex items-center justify-between">
                <span className="text-xs text-slate-400">Mostrando {filteredAfastamentos.length} registro(s)</span>
                <div className="flex gap-1">
@@ -608,7 +609,7 @@ const AdminGestaoPoliciais = () => {
         )}
       </div>
 
-      {/* Modal de Gerenciamento de Equipes (Mantido) */}
+      {/* Modais omitidos para brevidade (mantêm-se inalterados na lógica, apenas o botão de abrir mudou) */}
       {isTeamManagerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-[fadeIn_0.2s_ease-out]">
@@ -662,7 +663,6 @@ const AdminGestaoPoliciais = () => {
         </div>
       )}
 
-      {/* Modal de Novo/Editar Policial (Mantido) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-[fadeIn_0.2s_ease-out]">
@@ -734,7 +734,6 @@ const AdminGestaoPoliciais = () => {
         </div>
       )}
 
-      {/* Modal de Novo Afastamento (NOVO) */}
       {isAbsenceModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-visible animate-[fadeIn_0.2s_ease-out]">
@@ -750,6 +749,7 @@ const AdminGestaoPoliciais = () => {
             </div>
             
             <form onSubmit={handleSaveAbsence} className="p-6 space-y-4">
+              {/* Form content for Absence */}
               <div className="space-y-4">
                 <div className="relative">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Buscar Policial (Nome ou Matrícula)</label>

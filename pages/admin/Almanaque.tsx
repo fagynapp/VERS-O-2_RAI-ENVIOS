@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { usePoliceData, Policial } from '../../contexts/PoliceContext';
 
 // Estendendo a interface localmente para suportar campos específicos do Almanaque
@@ -13,6 +13,7 @@ const AdminAlmanaque = () => {
   const { policiais, setPoliciais, availableTeams } = usePoliceData();
   const [search, setSearch] = useState('');
   const [selectedEquipe, setSelectedEquipe] = useState('TODAS');
+  const [rankFilter, setRankFilter] = useState<'TODOS' | 'OFICIAL' | 'PRACA'>('TODOS');
 
   // Estados para Edição
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,6 +73,17 @@ const AdminAlmanaque = () => {
     return teamMembers.findIndex(p => p.id === policial.id) + 1;
   };
 
+  // Helpers de Classificação de Posto/Graduação
+  const isOfficer = (name: string) => {
+    const n = name.toUpperCase();
+    return n.includes('MAJ ') || n.includes('CAP ') || n.includes('TEN ') || n.includes('ASP ') || n.includes('CEL ') || n.includes('TC ') || n.includes('CORONEL ');
+  };
+
+  const isPraca = (name: string) => {
+    const n = name.toUpperCase();
+    return n.includes('SD ') || n.includes('CB ') || n.includes('SGT ') || n.includes('ST ') || n.includes('SUB ');
+  };
+
   // Lógica de Filtragem
   const filteredPoliciais = policiais.filter((policial) => {
     const term = search.toLowerCase();
@@ -86,8 +98,25 @@ const AdminAlmanaque = () => {
     const filtroEquipe = selectedEquipe.trim().toLowerCase();
     const matchesEquipe = selectedEquipe === 'TODAS' || policialEquipe === filtroEquipe;
     
-    return matchesSearch && matchesEquipe;
+    let matchesRank = true;
+    if (rankFilter === 'OFICIAL') {
+        matchesRank = isOfficer(policial.nome);
+    } else if (rankFilter === 'PRACA') {
+        matchesRank = isPraca(policial.nome);
+    }
+
+    return matchesSearch && matchesEquipe && matchesRank;
   });
+
+  // Estatísticas Dinâmicas
+  const stats = useMemo(() => {
+      return {
+          total: policiais.length,
+          oficiais: policiais.filter(p => isOfficer(p.nome)).length,
+          pracas: policiais.filter(p => isPraca(p.nome)).length,
+          filtrados: filteredPoliciais.length
+      };
+  }, [policiais, filteredPoliciais]);
 
   // --- Handlers de Ação ---
 
@@ -144,48 +173,86 @@ const AdminAlmanaque = () => {
 
   return (
     <div className="space-y-6">
-      {/* Título removido */}
-
       {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
-          <div><p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Total Efetivo</p><span className="text-3xl font-bold">{policiais.length}</span></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><span className="material-icons-round">groups</span></div>
+          <div>
+            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Total Efetivo</p>
+            <span className="text-2xl font-bold text-slate-800">{stats.total}</span>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
-          <div><p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Filtrados</p><span className="text-3xl font-bold">{filteredPoliciais.length}</span></div>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600"><span className="material-icons-round">military_tech</span></div>
+          <div>
+            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Oficiais</p>
+            <span className="text-2xl font-bold text-slate-800">{stats.oficiais}</span>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600"><span className="material-icons-round">shield</span></div>
+          <div>
+            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Praças</p>
+            <span className="text-2xl font-bold text-slate-800">{stats.pracas}</span>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600"><span className="material-icons-round">filter_list</span></div>
+          <div>
+            <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Filtrados</p>
+            <span className="text-2xl font-bold text-slate-800">{stats.filtrados}</span>
+          </div>
         </div>
       </div>
 
       {/* Barra de Ferramentas (Busca e Filtros) */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-        {/* Busca */}
-        <div className="relative w-full md:w-80">
-          <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
-          <input 
-            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
-            placeholder="Pesquisar por Policial ou Matrícula..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button 
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-            >
-              <span className="material-icons-round text-lg">close</span>
-            </button>
-          )}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between z-20 relative">
+        {/* Busca e Filtros de Posto */}
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center">
+            <div className="relative w-full md:w-80">
+                <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
+                <input 
+                    className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
+                    placeholder="Pesquisar por Policial ou Matrícula..." 
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                    <button 
+                    onClick={() => setSearch('')}
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                    >
+                    <span className="material-icons-round text-lg">close</span>
+                    </button>
+                )}
+            </div>
+
+            {/* Botões Oficial / Praça */}
+            <div className="flex bg-slate-100 p-1 rounded-lg">
+                <button 
+                    onClick={() => setRankFilter(rankFilter === 'OFICIAL' ? 'TODOS' : 'OFICIAL')}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${rankFilter === 'OFICIAL' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}
+                >
+                    <span className="material-icons-round text-sm">military_tech</span>
+                    Oficial
+                </button>
+                <button 
+                    onClick={() => setRankFilter(rankFilter === 'PRACA' ? 'TODOS' : 'PRACA')}
+                    className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${rankFilter === 'PRACA' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}
+                >
+                    <span className="material-icons-round text-sm">shield</span>
+                    Praça
+                </button>
+            </div>
         </div>
 
         {/* Filtros Direita */}
         <div className="flex gap-2 w-full md:w-auto">
-           <div className="relative">
+           <div className="relative w-full md:w-auto">
               <select
                 value={selectedEquipe}
                 onChange={(e) => setSelectedEquipe(e.target.value)}
-                className="h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none md:min-w-[150px]"
               >
                 <option value="TODAS">Filtros (Equipe)</option>
                 {availableTeams.map((team) => (
@@ -199,63 +266,65 @@ const AdminAlmanaque = () => {
       {/* Tabela */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {filteredPoliciais.length > 0 ? (
-            <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
-                <tr>
-                <th className="px-4 py-3 font-black text-center text-blue-700 bg-blue-50/50 border-r border-slate-200">Posição Geral</th>
-                <th className="px-4 py-3 font-black text-center border-r border-slate-200">Posição Equipe</th>
-                <th className="px-4 py-3 font-bold">Policial</th>
-                <th className="px-4 py-3 font-bold">Matrícula</th>
-                <th className="px-4 py-3 font-bold text-center">Equipe</th>
-                <th className="px-4 py-3 font-bold text-center">Atualização</th>
-                <th className="px-4 py-3 font-bold">Observações</th>
-                <th className="px-4 py-3 font-bold text-right">Ações</th>
-                </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-                {filteredPoliciais.map((policial) => {
-                    const p = policial as PolicialAlmanaque;
-                    return (
-                    <tr key={policial.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-4 py-3 font-black text-blue-600 text-center bg-blue-50/30 border-r border-slate-100 text-lg">
-                            {p.posicao_geral || calculateGeneralRank(policial.id)}º
-                        </td>
-                        <td className="px-4 py-3 text-center border-r border-slate-100 font-bold text-slate-600">
-                            {p.posicao_equipe || calculateTeamRank(policial)}º
-                        </td>
-                        <td className="px-4 py-3 font-bold text-slate-800 uppercase">{policial.nome}</td>
-                        <td className="px-4 py-3 font-mono text-slate-600">{formatMatricula(policial.matricula)}</td>
-                        <td className="px-4 py-3 text-center">
-                            <span className={`${getEquipeColor(policial.equipe)} px-2 py-1 rounded text-[10px] font-bold uppercase`}>
-                                {policial.equipe}
-                            </span>
-                        </td>
-                        <td className="px-4 py-3 text-center text-slate-500 text-xs">
-                            {p.data_atualizacao ? formatDate(p.data_atualizacao) : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-400 text-xs italic max-w-xs truncate">
-                            {p.observacoes || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                            <div className="flex justify-end gap-2">
-                                <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
-                                    <span className="material-icons-round text-lg">edit</span>
-                                </button>
-                                <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
-                                    <span className="material-icons-round text-lg">delete</span>
-                                </button>
-                            </div>
-                        </td>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-slate-50 border-b border-slate-100 text-xs text-slate-500 uppercase">
+                    <tr>
+                    <th className="px-4 py-3 font-black text-center text-blue-700 bg-blue-50/50 border-r border-slate-200">Posição Geral</th>
+                    <th className="px-4 py-3 font-black text-center border-r border-slate-200">Posição Equipe</th>
+                    <th className="px-4 py-3 font-bold">Policial</th>
+                    <th className="px-4 py-3 font-bold">Matrícula</th>
+                    <th className="px-4 py-3 font-bold text-center">Equipe</th>
+                    <th className="px-4 py-3 font-bold text-center">Atualização</th>
+                    <th className="px-4 py-3 font-bold">Observações</th>
+                    <th className="px-4 py-3 font-bold text-right">Ações</th>
                     </tr>
-                )})}
-            </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {filteredPoliciais.map((policial) => {
+                        const p = policial as PolicialAlmanaque;
+                        return (
+                        <tr key={policial.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-3 font-black text-blue-600 text-center bg-blue-50/30 border-r border-slate-100 text-lg">
+                                {p.posicao_geral || calculateGeneralRank(policial.id)}º
+                            </td>
+                            <td className="px-4 py-3 text-center border-r border-slate-100 font-bold text-slate-600">
+                                {p.posicao_equipe || calculateTeamRank(policial)}º
+                            </td>
+                            <td className="px-4 py-3 font-bold text-slate-800 uppercase">{policial.nome}</td>
+                            <td className="px-4 py-3 font-mono text-slate-600">{formatMatricula(policial.matricula)}</td>
+                            <td className="px-4 py-3 text-center">
+                                <span className={`${getEquipeColor(policial.equipe)} px-2 py-1 rounded text-[10px] font-bold uppercase`}>
+                                    {policial.equipe}
+                                </span>
+                            </td>
+                            <td className="px-4 py-3 text-center text-slate-500 text-xs">
+                                {p.data_atualizacao ? formatDate(p.data_atualizacao) : '-'}
+                            </td>
+                            <td className="px-4 py-3 text-slate-400 text-xs italic max-w-xs truncate">
+                                {p.observacoes || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                                <div className="flex justify-end gap-2">
+                                    <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                                        <span className="material-icons-round text-lg">edit</span>
+                                    </button>
+                                    <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
+                                        <span className="material-icons-round text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    )})}
+                </tbody>
+                </table>
+            </div>
         ) : (
             <div className="p-12 flex flex-col items-center justify-center text-center">
               <span className="material-icons-round text-slate-300 text-5xl mb-3">search_off</span>
               <p className="text-slate-500 font-medium">Nenhum registro encontrado.</p>
               <p className="text-slate-400 text-xs mt-1">
-                {search ? 'Tente buscar por outro nome ou matrícula.' : 'Tente alterar o filtro de equipe.'}
+                {search ? 'Tente buscar por outro nome ou matrícula.' : 'Tente alterar os filtros.'}
               </p>
             </div>
         )}

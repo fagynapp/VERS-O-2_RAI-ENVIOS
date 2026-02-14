@@ -167,7 +167,7 @@ const UserCalendar = () => {
     // Itera sobre todos os registros para contar as dispensas DESTE USUÁRIO neste MÊS
     Object.entries(calendarRegistros).forEach(([dateKey, registros]) => {
         if (dateKey.startsWith(targetMonth)) {
-            const userRecord = registros.find(r => r.matricula === currentUser.matricula);
+            const userRecord = (registros as DispensaRegistro[]).find(r => r.matricula === currentUser.matricula);
             if (userRecord) {
                 // Verifica a natureza (tipo) da dispensa
                 if (userRecord.tipo === 'PTS') countPTS++;

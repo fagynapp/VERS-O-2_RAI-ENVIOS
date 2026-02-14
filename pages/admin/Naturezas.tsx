@@ -249,10 +249,10 @@ const AdminNatureza = () => {
                 <span className="material-icons-round">upload_file</span>
             </button>
 
-            {/* Novo (Botão Azul +) */}
+            {/* Novo (Botão Azul + PADRONIZADO) */}
             <button 
                 onClick={handleAddNew} 
-                className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm hover:bg-blue-700 transition-colors"
+                className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors"
                 title="Nova Natureza"
             >
                 <span className="material-icons-round text-2xl">add</span>

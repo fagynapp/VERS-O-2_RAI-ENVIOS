@@ -338,24 +338,57 @@ const AdminEscala = () => {
 
   return (
     <div className="space-y-6 relative">
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: 'Efetivo no Mês', value: policiais.length.toString(), icon: 'groups', color: 'bg-blue-50 text-blue-500' },
-          { label: 'Folgas Registradas', value: Object.values(calendarRegistros).flat().length.toString(), icon: 'calendar_today', color: 'bg-orange-50 text-orange-500' },
-          { label: 'Dias Bloqueados', value: Object.keys(calendarBloqueios).length.toString(), icon: 'lock', color: 'bg-red-50 text-red-500' },
-          { label: 'Status Escala', value: 'ABERTA', icon: 'lock_open', color: 'bg-slate-50 text-slate-500', isText: true }
-        ].map((item, idx) => (
-          <div key={idx} className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">{item.label}</p>
-              <p className={`text-2xl ${item.isText ? 'font-black text-slate-700 text-xl' : 'font-bold text-slate-800'}`}>{item.value}</p>
-            </div>
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.color}`}>
-              <span className="material-icons-round text-2xl">{item.icon}</span>
-            </div>
+      {/* Cards de Estatísticas - PADRONIZADO */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        {/* Card 1 */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+            <span className="material-icons-round">groups</span>
           </div>
-        ))}
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Efetivo no Mês</p>
+            <p className="text-2xl font-bold text-slate-800">{policiais.length}</p>
+            <p className="text-[10px] text-blue-500 font-bold mt-0.5">Total Ativo</p>
+          </div>
+        </div>
+
+        {/* Card 2 */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 shrink-0">
+            <span className="material-icons-round">calendar_today</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Folgas Registradas</p>
+            <p className="text-2xl font-bold text-slate-800">{Object.values(calendarRegistros).flat().length}</p>
+            <p className="text-[10px] text-orange-500 font-bold mt-0.5">Neste Mês</p>
+          </div>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+            <span className="material-icons-round">lock</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dias Bloqueados</p>
+            <p className="text-2xl font-bold text-slate-800">{Object.keys(calendarBloqueios).length}</p>
+            <p className="text-[10px] text-red-500 font-bold mt-0.5">Restrições ADM</p>
+          </div>
+        </div>
+
+        {/* Card 4 */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+            <span className="material-icons-round">lock_open</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Status Escala</p>
+            <p className="text-2xl font-bold text-slate-800">ABERTA</p>
+            <p className="text-[10px] text-slate-500 font-bold mt-0.5">Edição Permitida</p>
+          </div>
+        </div>
+
       </div>
 
       {/* Barra de Ferramentas */}
@@ -367,11 +400,11 @@ const AdminEscala = () => {
         </div>
         <div className="flex bg-slate-100 p-1 rounded-lg">
           {['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA'].map((team) => (
-            <button key={team} onClick={() => setSelectedTeam(team)} className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${selectedTeam === team ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{team}</button>
+            <button key={team} onClick={() => setSelectedTeam(team)} className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${selectedTeam === team ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{team}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 pr-2 border-l border-slate-100 pl-6 h-10">
-          <button onClick={() => setShowBatchBlock(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors border border-orange-100">
+          <button onClick={() => setShowBatchBlock(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm">
             <span className="material-icons-round text-sm">date_range</span><span className="text-[10px] font-bold uppercase">Bloqueio em Lote</span>
           </button>
           <button onClick={() => setViewMode('batch-register')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">

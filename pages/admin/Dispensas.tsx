@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePoliceData } from '../../contexts/PoliceContext';
 
 // --- Interfaces Mock ---
@@ -19,7 +19,7 @@ const MOCK_REGISTROS: DispensaRegistro[] = [
 ];
 
 const AdminDispensas = () => {
-  const { setCpcQueue, setCpcQueueConfig } = usePoliceData(); // Usando o Contexto
+  const { setCpcQueue, setCpcQueueConfig, policiais } = usePoliceData(); // Usando o Contexto
   const [activeTab, setActiveTab] = useState<'GERAL' | 'FILA' | 'CONFIG'>('GERAL');
   const [search, setSearch] = useState('');
 
@@ -31,7 +31,14 @@ const AdminDispensas = () => {
   // Estados de Configuração
   const [limiteCPC, setLimiteCPC] = useState(1);
   const [limiteProd, setLimiteProd] = useState(1);
-  const [excecaoForm, setExcecaoForm] = useState({ busca: '', mes: '', limite: '' });
+  
+  // Estado do formulário de Exceção (Atualizado)
+  const [excecaoForm, setExcecaoForm] = useState({ 
+    matricula: '', 
+    nome: '', 
+    periodo: '', 
+    limite: '' 
+  });
 
   // Estatísticas (Mock)
   const stats = {
@@ -40,6 +47,22 @@ const AdminDispensas = () => {
     bloqueios: 1,
     totalProcessado: 156
   };
+
+  // Efeito para busca automática de policial (Exceção)
+  useEffect(() => {
+    const cleanMatricula = excecaoForm.matricula.replace(/\D/g, '');
+    if (cleanMatricula.length >= 3) {
+       // Busca exata se tiver 5 dígitos, ou parcial se estiver digitando (opcional, aqui focando na exata ou match simples)
+       const found = policiais.find(p => p.matricula === cleanMatricula);
+       if (found) {
+           setExcecaoForm(prev => ({ ...prev, nome: found.nome }));
+       } else {
+           setExcecaoForm(prev => ({ ...prev, nome: '' }));
+       }
+    } else {
+       setExcecaoForm(prev => ({ ...prev, nome: '' }));
+    }
+  }, [excecaoForm.matricula, policiais]);
 
   // Filtragem (Apenas visual para o exemplo)
   const filteredList = MOCK_REGISTROS.filter(item => 
@@ -80,55 +103,61 @@ const AdminDispensas = () => {
       }
   };
 
+  const handleSaveExcecao = () => {
+      if (!excecaoForm.matricula || !excecaoForm.periodo || !excecaoForm.limite) return;
+      alert(`Exceção cadastrada com sucesso!\n\nPolicial: ${excecaoForm.nome}\nPeríodo: ${excecaoForm.periodo}\nNovo Limite: ${excecaoForm.limite}`);
+      setExcecaoForm({ matricula: '', nome: '', periodo: '', limite: '' });
+  };
+
   return (
     <div className="space-y-6">
       
       {/* 1. DASHBOARD DE RESUMO */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1 */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
             <span className="material-icons-round">groups</span>
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">CPC em Fila</p>
-            <p className="text-2xl font-black text-slate-800">{stats.cpcFila}</p>
+            <p className="text-2xl font-bold text-slate-800">{stats.cpcFila}</p>
             <p className="text-[10px] text-blue-500 font-bold mt-0.5">Aguardando</p>
           </div>
         </div>
 
         {/* Card 2 */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
             <span className="material-icons-round">event_available</span>
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Prod. Agendadas</p>
-            <p className="text-2xl font-black text-slate-800">{stats.prodAgendadas}</p>
+            <p className="text-2xl font-bold text-slate-800">{stats.prodAgendadas}</p>
             <p className="text-[10px] text-green-500 font-bold mt-0.5">+12% este mês</p>
           </div>
         </div>
 
         {/* Card 3 */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-red-600 shrink-0">
             <span className="material-icons-round">lock</span>
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Bloqueios</p>
-            <p className="text-2xl font-black text-slate-800">{stats.bloqueios}</p>
+            <p className="text-2xl font-bold text-slate-800">{stats.bloqueios}</p>
             <p className="text-[10px] text-red-500 font-bold mt-0.5">Regime Especial</p>
           </div>
         </div>
 
         {/* Card 4 */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
             <span className="material-icons-round">done_all</span>
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Total Processado</p>
-            <p className="text-2xl font-black text-slate-800">{stats.totalProcessado}</p>
+            <p className="text-2xl font-bold text-slate-800">{stats.totalProcessado}</p>
             <p className="text-[10px] text-indigo-500 font-bold mt-0.5">Ciclo Atual</p>
           </div>
         </div>
@@ -173,10 +202,10 @@ const AdminDispensas = () => {
           </button>
           <button 
             onClick={() => setActiveTab('CONFIG')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'CONFIG' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            title="Configurações"
+            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center ${activeTab === 'CONFIG' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
           >
             <span className="material-icons-round text-sm">settings</span>
-            Configurações
           </button>
         </div>
       </div>
@@ -375,7 +404,7 @@ const AdminDispensas = () => {
                             <p className="text-[11px] font-medium text-slate-400 uppercase ml-9">Limite Mensal por Policial</p>
                         </div>
                         <input 
-                            className="w-20 text-center font-black text-2xl text-blue-600 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" 
+                            className="w-20 text-center font-black text-2xl text-blue-600 bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none" 
                             type="number" 
                             min="0"
                             value={limiteCPC}
@@ -391,7 +420,7 @@ const AdminDispensas = () => {
                             <p className="text-[11px] font-medium text-slate-400 uppercase ml-9">Limite Mensal por Policial</p>
                         </div>
                         <input 
-                            className="w-20 text-center font-black text-2xl text-green-600 border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500 outline-none" 
+                            className="w-20 text-center font-black text-2xl text-green-600 bg-white border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-green-500 outline-none" 
                             type="number" 
                             min="0"
                             value={limiteProd}
@@ -400,7 +429,7 @@ const AdminDispensas = () => {
                     </div>
                 </div>
 
-                {/* Exceções */}
+                {/* Exceções de Limite (NOVO LAYOUT) */}
                 <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -409,45 +438,81 @@ const AdminDispensas = () => {
                         </h3>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                            <div className="md:col-span-5">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Policial (Nome ou Matrícula)</label>
+                        {/* Linha 1: Identificação */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Matrícula Policial</label>
                                 <div className="relative">
                                     <input 
-                                        className="w-full bg-white border border-slate-300 rounded-lg pl-3 pr-10 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500" 
-                                        placeholder="Digite para buscar..." 
-                                        value={excecaoForm.busca}
-                                        onChange={(e) => setExcecaoForm({...excecaoForm, busca: e.target.value})}
+                                        className="w-full bg-white border border-slate-300 rounded-lg pl-4 pr-10 py-2.5 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 outline-none transition-all"
+                                        placeholder="Digite a matrícula (ex: 39874)"
+                                        maxLength={5}
+                                        value={excecaoForm.matricula}
+                                        onChange={(e) => setExcecaoForm({...excecaoForm, matricula: e.target.value})}
                                     />
-                                    <span className="material-icons-round absolute right-3 top-2.5 text-slate-400">search</span>
+                                    <span className={`material-icons-round absolute right-3 top-2.5 transition-colors ${excecaoForm.nome ? 'text-green-500' : 'text-slate-300'}`}>
+                                        {excecaoForm.nome ? 'verified' : 'badge'}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="md:col-span-3">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Referência (Mês/Ano)</label>
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Nome Policial (Automático)</label>
                                 <input 
-                                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500" 
-                                    type="month"
-                                    value={excecaoForm.mes}
-                                    onChange={(e) => setExcecaoForm({...excecaoForm, mes: e.target.value})}
+                                    className={`w-full border rounded-lg px-4 py-2.5 text-sm outline-none uppercase transition-colors font-bold ${excecaoForm.nome ? 'bg-green-50 border-green-200 text-green-800' : 'bg-slate-100 border-slate-200 text-slate-400'}`}
+                                    placeholder="Aguardando Matrícula..."
+                                    readOnly
+                                    value={excecaoForm.nome}
                                 />
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Novo Limite</label>
+                        </div>
+
+                        {/* Linha 2: Configuração e Ação */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div className="md:col-span-5">
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Período (Mês de Referência)</label>
+                                <select 
+                                    className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-600 outline-none uppercase"
+                                    value={excecaoForm.periodo}
+                                    onChange={(e) => setExcecaoForm({...excecaoForm, periodo: e.target.value})}
+                                >
+                                    <option value="">Selecione o Mês</option>
+                                    <option value="JANEIRO">JANEIRO</option>
+                                    <option value="FEVEREIRO">FEVEREIRO</option>
+                                    <option value="MARÇO">MARÇO</option>
+                                    <option value="ABRIL">ABRIL</option>
+                                    <option value="MAIO">MAIO</option>
+                                    <option value="JUNHO">JUNHO</option>
+                                    <option value="JULHO">JULHO</option>
+                                    <option value="AGOSTO">AGOSTO</option>
+                                    <option value="SETEMBRO">SETEMBRO</option>
+                                    <option value="OUTUBRO">OUTUBRO</option>
+                                    <option value="NOVEMBRO">NOVEMBRO</option>
+                                    <option value="DEZEMBRO">DEZEMBRO</option>
+                                </select>
+                            </div>
+                            <div className="md:col-span-4">
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Novo Limite (Qtd Dispensas)</label>
                                 <input 
-                                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2.5 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500" 
-                                    placeholder="Qtd." 
                                     type="number"
-                                    min="0"
+                                    min="1"
+                                    className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-sm font-bold text-blue-600 focus:ring-2 focus:ring-blue-600 outline-none"
+                                    placeholder="Ex: 2"
                                     value={excecaoForm.limite}
                                     onChange={(e) => setExcecaoForm({...excecaoForm, limite: e.target.value})}
                                 />
                             </div>
-                            <div className="md:col-span-2">
+                            <div className="md:col-span-3">
                                 <button 
-                                    onClick={() => alert("Exceção aplicada com sucesso!")}
-                                    className="w-full bg-blue-600 text-white font-bold text-xs uppercase py-3 rounded-lg hover:bg-blue-700 shadow-lg shadow-blue-100 transition-colors"
+                                    onClick={handleSaveExcecao}
+                                    disabled={!excecaoForm.nome || !excecaoForm.periodo || !excecaoForm.limite}
+                                    className={`w-full font-bold text-xs uppercase py-3 rounded-lg shadow-lg transition-all flex items-center justify-center gap-2 ${
+                                        (!excecaoForm.nome || !excecaoForm.periodo || !excecaoForm.limite)
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200 active:scale-95'
+                                    }`}
                                 >
-                                    Aplicar
+                                    <span className="material-icons-round text-lg">save</span>
+                                    Salvar
                                 </button>
                             </div>
                         </div>

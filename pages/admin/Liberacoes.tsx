@@ -358,7 +358,7 @@ const AdminLiberacoes = () => {
         <div className="flex bg-slate-100 p-1 rounded-lg">
           <button 
             onClick={() => { setActiveTab('LIBERADOS'); resetForm(); }}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'LIBERADOS' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'LIBERADOS' ? 'bg-green-800 text-white shadow-sm' : 'text-slate-500 hover:text-green-800'}`}
           >
             <span className="material-icons-round text-sm">list</span>
             Liberados

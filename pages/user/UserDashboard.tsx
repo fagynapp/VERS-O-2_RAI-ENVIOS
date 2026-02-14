@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { usePoliceData } from '../../contexts/PoliceContext';
+import { usePoliceData, DispensaRegistro } from '../../contexts/PoliceContext';
 
 const StatCard = ({ icon, label, value, sub, color }: any) => (
   <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between h-32 hover:shadow-md transition-shadow">
@@ -42,7 +42,7 @@ const UserDashboard = () => {
     // 1. Encontra todas as datas que possuem registro para a matrícula do usuário
     const myDates = Object.entries(calendarRegistros)
       .filter(([dateKey, registros]) => {
-        return registros.some(r => r.matricula === currentUser.matricula);
+        return (registros as DispensaRegistro[]).some(r => r.matricula === currentUser.matricula);
       })
       .map(([dateKey]) => dateKey);
 
