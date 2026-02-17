@@ -18,7 +18,9 @@ import {
   AdminAlmanaque,
   AdminRanking,
   AdminBancoDados,
-  AdminConfiguracoes
+  AdminConfiguracoes,
+  TILogin,
+  TIDashboard
 } from './pages';
 import { PoliceProvider, usePoliceData } from './contexts/PoliceContext';
 
@@ -269,6 +271,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/ti-login" element={<TILogin />} />
           
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -294,6 +297,12 @@ const App = () => {
             <Route path="registro" element={<RegisterRAI />} />
             <Route path="historico" element={<UserHistory />} />
             <Route path="telefones" element={<UserTelefones />} />
+          </Route>
+
+          {/* TI Routes - Sem Layout Complexo, apenas Dashboard Full */}
+          <Route path="/ti" element={<Outlet />}>
+             <Route index element={<Navigate to="dashboard" replace />} />
+             <Route path="dashboard" element={<TIDashboard />} />
           </Route>
 
           {/* Fallback */}

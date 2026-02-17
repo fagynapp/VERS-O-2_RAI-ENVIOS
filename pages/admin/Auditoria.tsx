@@ -224,47 +224,49 @@ const AdminAuditoria = () => {
         </div>
       </div>
 
-      {/* 2. BARRA DE FERRAMENTAS E ABAS */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between z-20 relative">
-        {/* Busca */}
+      {/* 2. BARRA DE FERRAMENTAS E ABAS - AJUSTADO PARA MOBILE */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 md:gap-4 items-center justify-between z-20 relative">
+        {/* Busca - Sempre ocupa toda a largura no mobile */}
         <div className="relative w-full md:w-80">
-          <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
-          <input 
-            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
-            placeholder="RAI, Policial, Matrícula..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button 
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-            >
-              <span className="material-icons-round text-lg">close</span>
-            </button>
-          )}
+          <div className="relative w-full">
+            <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
+            <input 
+              className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
+              placeholder="RAI, Policial, Matrícula..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+              >
+                <span className="material-icons-round text-lg">close</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Seletor de Abas */}
-        <div className="flex bg-slate-100 p-1 rounded-lg">
+        {/* Seletor de Abas - Ocupa toda a largura no mobile e alinha com a busca */}
+        <div className="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto">
           <button 
             onClick={() => setActiveTab('PENDENTES')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'PENDENTES' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 hover:text-orange-600'}`}
+            className={`flex-1 md:flex-none px-2 md:px-4 py-1.5 rounded-md text-[9px] md:text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap ${activeTab === 'PENDENTES' ? 'bg-orange-500 text-white shadow-sm' : 'text-slate-500 hover:text-orange-600'}`}
           >
             <span className="material-icons-round text-sm">hourglass_empty</span>
             Pendentes
-            {stats.pendentes > 0 && <span className="ml-1 bg-white/20 px-1.5 rounded text-[9px]">{stats.pendentes}</span>}
+            {stats.pendentes > 0 && <span className="ml-0.5 md:ml-1 bg-white/20 px-1 rounded text-[8px]">{stats.pendentes}</span>}
           </button>
           <button 
             onClick={() => setActiveTab('APROVADOS')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'APROVADOS' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:text-green-600'}`}
+            className={`flex-1 md:flex-none px-2 md:px-4 py-1.5 rounded-md text-[9px] md:text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap ${activeTab === 'APROVADOS' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:text-green-600'}`}
           >
             <span className="material-icons-round text-sm">check_circle</span>
             Aprovados
           </button>
           <button 
             onClick={() => setActiveTab('REPROVADOS')}
-            className={`px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center gap-2 ${activeTab === 'REPROVADOS' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500 hover:text-red-600'}`}
+            className={`flex-1 md:flex-none px-2 md:px-4 py-1.5 rounded-md text-[9px] md:text-xs font-bold uppercase transition-all flex items-center justify-center gap-1 md:gap-2 whitespace-nowrap ${activeTab === 'REPROVADOS' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-500 hover:text-red-600'}`}
           >
             <span className="material-icons-round text-sm">cancel</span>
             Reprovados

@@ -391,24 +391,29 @@ const AdminEscala = () => {
 
       </div>
 
-      {/* Barra de Ferramentas */}
-      <div className="bg-white rounded-xl p-2 border border-slate-200 flex flex-wrap items-center justify-between shadow-sm gap-4">
-        <div className="flex items-center gap-2 pl-2 border-r border-slate-100 pr-6 h-10">
+      {/* Barra de Ferramentas - Centralizada no Mobile */}
+      <div className="bg-white rounded-xl p-3 md:p-2 border border-slate-200 flex flex-col md:flex-row md:flex-wrap items-center justify-center md:justify-between shadow-sm gap-6 md:gap-4">
+        {/* Navegação de Mês - Centralizada no Mobile */}
+        <div className="flex items-center gap-2 justify-center w-full md:w-auto md:border-r md:border-slate-100 md:pr-6 h-10">
           <button onClick={handlePrevMonth} className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"><span className="material-icons-round">chevron_left</span></button>
           <span className="text-xs font-black text-slate-700 uppercase min-w-[150px] text-center">{currentMonthStr}</span>
           <button onClick={handleNextMonth} className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"><span className="material-icons-round">chevron_right</span></button>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-lg">
+
+        {/* Seletor de Equipes - Centralizado no Mobile */}
+        <div className="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto justify-center overflow-x-auto no-scrollbar">
           {['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA'].map((team) => (
-            <button key={team} onClick={() => setSelectedTeam(team)} className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all ${selectedTeam === team ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{team}</button>
+            <button key={team} onClick={() => setSelectedTeam(team)} className={`px-4 py-1.5 rounded-md text-[10px] font-bold uppercase transition-all whitespace-nowrap ${selectedTeam === team ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}>{team}</button>
           ))}
         </div>
-        <div className="flex items-center gap-2 pr-2 border-l border-slate-100 pl-6 h-10">
-          <button onClick={() => setShowBatchBlock(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm">
-            <span className="material-icons-round text-sm">date_range</span><span className="text-[10px] font-bold uppercase">Bloqueio em Lote</span>
+
+        {/* Botões de Ação em Lote - Centralizados e Alinhados no Mobile */}
+        <div className="flex items-center gap-2 justify-center w-full md:w-auto md:border-l md:border-slate-100 md:pl-6">
+          <button onClick={() => setShowBatchBlock(true)} className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-2 md:py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm">
+            <span className="material-icons-round text-sm">date_range</span><span className="text-[10px] font-bold uppercase">Bloqueio</span>
           </button>
-          <button onClick={() => setViewMode('batch-register')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">
-            <span className="material-icons-round text-sm">playlist_add</span><span className="text-[10px] font-bold uppercase">Registrar em Lote</span>
+          <button onClick={() => setViewMode('batch-register')} className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-3 py-2 md:py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">
+            <span className="material-icons-round text-sm">playlist_add</span><span className="text-[10px] font-bold uppercase">Registro</span>
           </button>
         </div>
       </div>
@@ -465,11 +470,10 @@ const AdminEscala = () => {
         </div>
       </div>
 
-      {/* Modais (Batch Register, Batch Block, Options, Block Form, Dispensa Form) - Código mantido estruturalmente, apenas lógica interna atualizada via Context acima */}
+      {/* Modais (Batch Register, Batch Block, Options, Block Form, Dispensa Form) */}
       {viewMode === 'batch-register' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden animate-[fadeIn_0.2s_ease-out]">
-             {/* Header */}
              <div className="bg-blue-600 p-5 flex justify-between items-center text-white">
               <div className="flex items-center gap-3">
                 <span className="material-icons-round text-2xl">playlist_add</span>
@@ -480,7 +484,6 @@ const AdminEscala = () => {
               </div>
               <button onClick={() => setViewMode('none')} className="hover:bg-white/20 p-1 rounded transition-colors"><span className="material-icons-round">close</span></button>
             </div>
-            {/* Form */}
             <form onSubmit={handleSaveBatchRegisters} className="p-6">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
@@ -634,7 +637,6 @@ const AdminEscala = () => {
                             <span className="material-icons-round">groups</span>
                           </button>
 
-                          {/* Sugestões de Busca */}
                           {showSuggestions && suggestions.length > 0 && (
                               <div className="absolute top-full left-0 w-full z-20 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
                                   {suggestions.map((policial, idx) => (
@@ -645,7 +647,6 @@ const AdminEscala = () => {
                               </div>
                           )}
 
-                          {/* Lista Completa da Equipe (Ao clicar no ícone) */}
                           {showTeamMembers && (
                               <div className="absolute top-full left-0 w-full z-20 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto animate-[fadeIn_0.1s_ease-out]">
                                   <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase sticky top-0 flex justify-between items-center">

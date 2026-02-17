@@ -48,7 +48,7 @@ const Login = () => {
                 <span className="material-icons-round text-blue-600 mb-1">verified_user</span>
                 <span className="text-[10px] font-semibold text-gray-600">Admin</span>
               </button>
-              <button onClick={() => alert("Acesso TI em manutenção.")} className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition border border-transparent hover:border-blue-200">
+              <button onClick={() => navigate('/ti-login')} className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition border border-transparent hover:border-blue-200">
                 <span className="material-icons-round text-blue-600 mb-1">computer</span>
                 <span className="text-[10px] font-semibold text-gray-600">TI</span>
               </button>
