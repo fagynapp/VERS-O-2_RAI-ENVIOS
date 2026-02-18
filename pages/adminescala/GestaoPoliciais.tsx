@@ -2,11 +2,11 @@ import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { usePoliceData, Policial, Afastamento } from '../../contexts/PoliceContext';
 
-const AdminGestaoPoliciais = () => {
+const AdminEscalaGestaoPoliciais = () => {
   // Use Context Global Data (including shared 'afastamentos' state)
   const { 
     policiais, setPoliciais, 
-    availableTeams, setAvailableTeams, 
+    availableTeams, setAvailableTeams,
     afastamentos, setAfastamentos 
   } = usePoliceData();
   
@@ -367,10 +367,10 @@ const AdminGestaoPoliciais = () => {
 
   return (
     <div className="space-y-6">
-      {/* Cards de Estatísticas Atualizados */}
+      {/* Cards de Estatísticas Atualizados - TEMA INDIGO */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"><span className="material-icons-round">groups</span></div>
+          <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600"><span className="material-icons-round">groups</span></div>
           <div><p className="text-xs font-bold text-slate-500 uppercase">Total Efetivo</p><p className="text-2xl font-bold">{policiais.length}</p></div>
         </div>
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
@@ -387,13 +387,13 @@ const AdminGestaoPoliciais = () => {
         </div>
       </div>
 
-      {/* Barra de Ações, Abas e Filtros - LAYOUT ATUALIZADO PARA MOBILE */}
+      {/* Barra de Ações, Abas e Filtros */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col md:flex-row gap-4 items-center justify-between z-20 relative">
         {/* Busca */}
         <div className="relative w-full md:w-80">
           <span className="material-icons-round absolute left-3 top-2.5 text-slate-400">search</span>
           <input 
-            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-slate-400" 
+            className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-10 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all placeholder-slate-400" 
             placeholder={activeTab === 'POLICIAIS' ? "Pesquisar policial..." : "Pesquisar afastamento..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -408,11 +408,11 @@ const AdminGestaoPoliciais = () => {
           )}
         </div>
 
-        {/* Seletor de Abas (Segmented Control) - Centered */}
+        {/* Seletor de Abas (Segmented Control) - TEMA INDIGO */}
         <div className="flex bg-slate-100 p-1 rounded-lg w-full md:w-auto justify-center">
           <button 
             onClick={() => setActiveTab('POLICIAIS')}
-            className={`flex-1 md:flex-none px-6 md:px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${activeTab === 'POLICIAIS' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-500 hover:text-blue-600'}`}
+            className={`flex-1 md:flex-none px-6 md:px-4 py-1.5 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 ${activeTab === 'POLICIAIS' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
           >
             <span className="material-icons-round text-sm">badge</span>
             Cadastro
@@ -426,7 +426,7 @@ const AdminGestaoPoliciais = () => {
           </button>
         </div>
 
-        {/* Ações Direita - Adjusted for Mobile Stacking */}
+        {/* Ações Direita */}
         <div className="flex gap-2 w-full md:w-auto">
           {activeTab === 'POLICIAIS' && (
             <>
@@ -434,7 +434,7 @@ const AdminGestaoPoliciais = () => {
                 <select
                   value={selectedEquipe}
                   onChange={(e) => setSelectedEquipe(e.target.value)}
-                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[100px] md:min-w-[120px]"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none min-w-[100px] md:min-w-[120px]"
                 >
                   <option value="TODAS">Filtros</option>
                   {availableTeams.map((team) => (
@@ -444,7 +444,7 @@ const AdminGestaoPoliciais = () => {
               </div>
               <button 
                 onClick={() => setIsTeamManagerOpen(true)}
-                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-colors shadow-sm shrink-0"
+                className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors shadow-sm shrink-0"
                 title="Gerenciar Nomes das Equipes"
               >
                 <span className="material-icons-round">edit_note</span>
@@ -462,7 +462,7 @@ const AdminGestaoPoliciais = () => {
                 <select
                   value={selectedEquipe}
                   onChange={(e) => setSelectedEquipe(e.target.value)}
-                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none min-w-[120px]"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-lg px-3 text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer appearance-none min-w-[120px]"
                 >
                   <option value="TODAS">Filtros</option>
                   {availableTeams.map((team) => (
@@ -472,13 +472,13 @@ const AdminGestaoPoliciais = () => {
              </div>
            )}
 
-          <button onClick={handleNew} className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors shrink-0" title="Novo Registro">
+          <button onClick={handleNew} className="w-10 h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center shadow-sm transition-colors shrink-0" title="Novo Registro">
             <span className="material-icons-round text-2xl">add</span>
           </button>
         </div>
       </div>
 
-      {/* Conteúdo das Abas e Modais (Mantido inalterado) */}
+      {/* Conteúdo das Abas e Modais */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
         {activeTab === 'POLICIAIS' ? (
           filteredPoliciais.length > 0 ? (
@@ -510,7 +510,7 @@ const AdminGestaoPoliciais = () => {
                         <td className="px-6 py-4 text-slate-500 text-xs">{policial.email}</td>
                         <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                            <button onClick={() => handleEdit(policial)} className="text-slate-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-50 transition-colors" title="Editar">
                             <span className="material-icons-round text-lg">edit</span>
                             </button>
                             <button onClick={() => handleDelete(policial.id, policial.nome)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
@@ -568,7 +568,7 @@ const AdminGestaoPoliciais = () => {
                         <td className="px-4 py-4 text-slate-500 text-xs max-w-xs truncate">{afastamento.obs}</td>
                         <td className="px-4 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                            <button onClick={() => handleEditAbsence(afastamento)} className="text-slate-400 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors" title="Editar">
+                            <button onClick={() => handleEditAbsence(afastamento)} className="text-slate-400 hover:text-indigo-600 p-1 rounded-full hover:bg-indigo-50 transition-colors" title="Editar">
                             <span className="material-icons-round text-lg">edit</span>
                             </button>
                             <button onClick={() => handleDeleteAbsence(afastamento.id)} className="text-slate-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors" title="Excluir">
@@ -585,7 +585,7 @@ const AdminGestaoPoliciais = () => {
                <span className="text-xs text-slate-400">Mostrando {filteredAfastamentos.length} registro(s)</span>
                <div className="flex gap-1">
                  <button className="px-3 py-1 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded hover:bg-slate-50">Anterior</button>
-                 <button className="px-3 py-1 text-xs font-bold text-white bg-blue-600 border border-blue-600 rounded">1</button>
+                 <button className="px-3 py-1 text-xs font-bold text-white bg-indigo-600 border border-indigo-600 rounded">1</button>
                  <button className="px-3 py-1 text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded hover:bg-slate-50">Próximo</button>
                </div>
             </div>
@@ -593,7 +593,7 @@ const AdminGestaoPoliciais = () => {
         )}
       </div>
 
-      {/* Modais omitidos para brevidade (mantêm-se inalterados na lógica, apenas o botão de abrir mudou) */}
+      {/* Modais com tema Indigo */}
       {isTeamManagerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-[fadeIn_0.2s_ease-out]">
@@ -619,7 +619,7 @@ const AdminGestaoPoliciais = () => {
                                             <input 
                                                 value={newTeamName}
                                                 onChange={(e) => setNewTeamName(e.target.value)}
-                                                className="w-full bg-white border border-blue-400 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                                                className="w-full bg-white border border-indigo-400 rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-indigo-200"
                                                 autoFocus
                                             />
                                             <button onClick={saveTeamName} className="p-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors" title="Salvar">
@@ -632,7 +632,7 @@ const AdminGestaoPoliciais = () => {
                                     ) : (
                                         <div className="flex justify-between items-center">
                                             <span className="font-medium text-slate-700 text-sm">{team}</span>
-                                            <button onClick={() => startEditingTeam(team)} className="text-slate-400 hover:text-blue-600 p-1" title="Renomear">
+                                            <button onClick={() => startEditingTeam(team)} className="text-slate-400 hover:text-indigo-600 p-1" title="Renomear">
                                                 <span className="material-icons-round text-sm">edit</span>
                                             </button>
                                         </div>
@@ -650,7 +650,7 @@ const AdminGestaoPoliciais = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-[fadeIn_0.2s_ease-out]">
-            <div className="bg-blue-600 p-5 flex justify-between items-center text-white">
+            <div className="bg-indigo-600 p-5 flex justify-between items-center text-white">
               <div className="flex items-center gap-3">
                 <span className="material-icons-round text-2xl">person_add</span>
                 <div>
@@ -669,26 +669,26 @@ const AdminGestaoPoliciais = () => {
                     name="nome"
                     value={formData.nome}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none" 
                     placeholder="Ex: Sd Silva"
                     required
                   />
                 </div>
-                {/* Outros campos do form de policial mantidos */}
+                {/* Outros campos */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Matrícula</label>
-                    <input name="matricula" value={formData.matricula} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="00000" required />
+                    <input name="matricula" value={formData.matricula} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="00000" required />
                   </div>
                   <div>
                     <div className="flex justify-between items-center mb-1">
                       <label className="block text-[10px] font-bold text-slate-500 uppercase">Equipe / Setor</label>
-                      <button type="button" onClick={() => setIsCustomTeam(!isCustomTeam)} className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase">{isCustomTeam ? 'Selecionar da Lista' : '+ Nova Equipe'}</button>
+                      <button type="button" onClick={() => setIsCustomTeam(!isCustomTeam)} className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase">{isCustomTeam ? 'Selecionar da Lista' : '+ Nova Equipe'}</button>
                     </div>
                     {isCustomTeam ? (
-                      <input name="equipe" value={formData.equipe} onChange={handleInputChange} className="w-full bg-white border border-blue-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none placeholder-slate-400" placeholder="Nova equipe..." />
+                      <input name="equipe" value={formData.equipe} onChange={handleInputChange} className="w-full bg-white border border-indigo-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none placeholder-slate-400" placeholder="Nova equipe..." />
                     ) : (
-                      <select name="equipe" value={formData.equipe} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none">
+                      <select name="equipe" value={formData.equipe} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none">
                         {availableTeams.map(team => (<option key={team} value={team}>{team}</option>))}
                       </select>
                     )}
@@ -697,21 +697,21 @@ const AdminGestaoPoliciais = () => {
                 <div className="grid grid-cols-2 gap-4">
                    <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Aniversário</label>
-                    <input name="aniversario" value={formData.aniversario} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="DD/MM" />
+                    <input name="aniversario" value={formData.aniversario} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="DD/MM" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Telefone</label>
-                    <input name="telefone" value={formData.telefone} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="(00) 00000-0000" />
+                    <input name="telefone" value={formData.telefone} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="(00) 00000-0000" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email</label>
-                  <input name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none" placeholder="email@pm.go.gov.br" />
+                  <input name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-600 outline-none" placeholder="email@pm.go.gov.br" />
                 </div>
               </div>
               <div className="flex gap-3 justify-end pt-4 border-t border-slate-100 mt-2">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">Cancelar</button>
-                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-200 transition-colors">Salvar</button>
+                <button type="submit" className="px-6 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-lg shadow-indigo-200 transition-colors">Salvar</button>
               </div>
             </form>
           </div>
@@ -844,4 +844,4 @@ const AdminGestaoPoliciais = () => {
   );
 };
 
-export default AdminGestaoPoliciais;
+export default AdminEscalaGestaoPoliciais;

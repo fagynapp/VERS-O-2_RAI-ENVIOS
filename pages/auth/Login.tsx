@@ -6,9 +6,12 @@ const Login = () => {
   const [email, setEmail] = useState('');
 
   const handleLogin = (role: 'user' | 'admin') => {
-    // Simulação de login
-    if (role === 'admin') navigate('/admin/dashboard');
-    else navigate('/user/dashboard');
+    if (role === 'admin') {
+      // Redireciona para o login específico de administradores
+      navigate('/admin-login');
+    } else {
+      navigate('/user/dashboard');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -19,7 +22,7 @@ const Login = () => {
     }
     // Lógica simples para demo
     if (email.includes('admin')) {
-      handleLogin('admin');
+      navigate('/admin-login');
     } else {
       handleLogin('user');
     }
@@ -44,8 +47,8 @@ const Login = () => {
                 <span className="material-icons-round text-blue-600 mb-1">person_outline</span>
                 <span className="text-[10px] font-semibold text-gray-600">Usuário</span>
               </button>
-              <button onClick={() => handleLogin('admin')} className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition border border-transparent hover:border-blue-200">
-                <span className="material-icons-round text-blue-600 mb-1">verified_user</span>
+              <button onClick={() => handleLogin('admin')} className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition border border-transparent hover:border-slate-200">
+                <span className="material-icons-round text-slate-600 mb-1">admin_panel_settings</span>
                 <span className="text-[10px] font-semibold text-gray-600">Admin</span>
               </button>
               <button onClick={() => navigate('/ti-login')} className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition border border-transparent hover:border-blue-200">
